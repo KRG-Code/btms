@@ -28,7 +28,7 @@ const MyAccount = lazy(() => import("./components/users/tanods/MyAcc"));
 // Resident routes
 const ResidentRating = lazy(() => import("./components/users/residents/TanodPersonels"));
 const Home= lazy(() => import("./components/users/residents/Home"));
-
+const ReportIncident= lazy(() => import("./components/users/residents/ReportIncident"));
 function App() {
   return (
     <div className="flex-1 p-6 bg-background text-text">
@@ -83,6 +83,10 @@ function App() {
                 <Route
                   path="/ratetanod"
                   element={<ProtectedRoute userTypeAllowed={["resident"]}><ResidentRating /></ProtectedRoute>}
+                />
+                <Route
+                  path="/reportincident"
+                  element={<ProtectedRoute userTypeAllowed={["resident"]}><ReportIncident /></ProtectedRoute>}
                 />
               </Route>
               
