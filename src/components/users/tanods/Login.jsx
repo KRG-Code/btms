@@ -45,8 +45,6 @@ export default function LoginTanod() {
       });
       const data = await response.json();
 
-      console.log('Login response:', data); // Add this for debugging
-
       if (response.ok) {
         // Call login from context to set token and fetch user data
         await login(data.token);
