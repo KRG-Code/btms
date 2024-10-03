@@ -48,27 +48,27 @@ function App() {
               {/* Protected Routes for Tanod */}
               <Route element={<Layout />}>
                 <Route
-                  path="/dashboard"
+                  path="/Dashboard"
                   element={<ProtectedRoute userTypeAllowed={["tanod"]}><Dashboard /></ProtectedRoute>}
                 />
                 <Route
-                  path="/patrolmap"
+                  path="/Patrolmap"
                   element={<ProtectedRoute userTypeAllowed={["tanod"]}><Patrolmap /></ProtectedRoute>}
                 />
                 <Route
-                  path="/equipments"
+                  path="/Equipments"
                   element={<ProtectedRoute userTypeAllowed={["tanod"]}><Equipments /></ProtectedRoute>}
                 />
                 <Route
-                  path="/performance"
+                  path="/Performance"
                   element={<ProtectedRoute userTypeAllowed={["tanod"]}><Performance /></ProtectedRoute>}
                 />
                 <Route
-                  path="/schedule"
+                  path="/Schedule"
                   element={<ProtectedRoute userTypeAllowed={["tanod"]}><Schedule /></ProtectedRoute>}
                 />
                 <Route
-                  path="/incidents"
+                  path="/Incidents"
                   element={<ProtectedRoute userTypeAllowed={["tanod"]}><Incidents /></ProtectedRoute>}
                 />
                 
@@ -77,15 +77,15 @@ function App() {
               {/* Protected Routes for Residents */}
               <Route element={<Layout />}>
                 <Route
-                  path="/home"
+                  path="/Home"
                   element={<ProtectedRoute userTypeAllowed={["resident"]}><Home /></ProtectedRoute>}
                 />
                 <Route
-                  path="/ratetanod"
+                  path="/Ratetanod"
                   element={<ProtectedRoute userTypeAllowed={["resident"]}><ResidentRating /></ProtectedRoute>}
                 />
                 <Route
-                  path="/reportincident"
+                  path="/Reportincidents"
                   element={<ProtectedRoute userTypeAllowed={["resident"]}><ReportIncident /></ProtectedRoute>}
                 />
               </Route>
@@ -93,7 +93,7 @@ function App() {
               {/* Protected Routes for Admin */}
               <Route element={<Layout />}>
                 <Route
-                  path="/admindashboard"
+                  path="/Admindashboard"
                   element={<ProtectedRoute userTypeAllowed={["admin"]}><AdminDashboard /></ProtectedRoute>}
                 />
                 <Route
