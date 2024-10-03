@@ -67,23 +67,29 @@ export default function NotificationList({ onClose }) {
   }
 
   return (
-    <div ref={dropdownRef} className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg p-4 z-50 TopNav">
+    <div
+      ref={dropdownRef}
+      className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg p-4 z-50 TopNav"
+    >
       <h2 className="font-bold mb-2">Notifications</h2>
       {notifications.length === 0 ? (
         <p>No new notifications</p>
       ) : (
-        <ul className="space-y-2 TopNav">
-          {notifications.slice(0, 3).map((notification) => (
-            <li
-              key={notification._id}
-              className={`p-2 ${notification.read ? "bg-gray-100" : "bg-gray-200"} rounded TopNav`}
-            >
-              {notification.message}{" "}
-              <span className="text-sm text-gray-500">
-                <br />- {new Date(notification.createdAt).toLocaleString()}
-              </span>
-            </li>
-          ))}
+        <ul className="space-y-2 TopNav overflow-y-auto" style={{ maxHeight: "300px" }}>
+          {notifications
+            .slice() // Create a copy of the array
+            .reverse() // Reverse it to show latest notifications on top
+            .map((notification) => (
+              <li
+                key={notification._id}
+                className={`p-2 ${notification.read ? "bg-gray-100" : "bg-gray-200"} rounded TopNav`}
+              >
+                {notification.message}{" "}
+                <span className="text-sm text-gray-500">
+                  <br />- {new Date(notification.createdAt).toLocaleString()}
+                </span>
+              </li>
+            ))}
         </ul>
       )}
     </div>
