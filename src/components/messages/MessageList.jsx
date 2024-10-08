@@ -1,4 +1,3 @@
-// MessageList.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -31,14 +30,14 @@ export default function MessageList() {
     fetchMessages();
   }, []);
 
-  if (loading) {
-    return <div>Loading messages...</div>;
-  }
-
   return (
-    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg p-4">
+    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg p-4 z-50 TopNav">
       <h2 className="font-bold mb-2">Messages</h2>
-      {messages.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center items-center h-24">
+          <div className="animate-spin h-5 w-5 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+        </div>
+      ) : messages.length === 0 ? (
         <p>No new messages</p>
       ) : (
         <ul className="space-y-2">

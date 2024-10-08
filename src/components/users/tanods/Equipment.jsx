@@ -71,7 +71,7 @@ const Equipment = () => {
       const formData = {
         name: newItem.name,
         borrowDate: new Date().toISOString(),
-        returnDate: 0, // Set returnDate to 0
+        returnDate: "1970-01-01T00:00:00.000Z", // Set returnDate to a default value
         imageUrl,
       };
 
@@ -98,13 +98,13 @@ const Equipment = () => {
     }
   };
 
-  const handleReturn = (index) => {
+  const handleReturn = (itemId) => {
     toast.info(
       <div>
         <p>Do you want to return this item?</p>
         <button
           className="bg-green-500 text-white p-2 rounded m-2"
-          onClick={() => confirmReturn(index)}
+          onClick={() => confirmReturn(itemId)}
         >
           Yes
         </button>
@@ -121,11 +121,11 @@ const Equipment = () => {
     );
   };
 
-  const confirmReturn = async (index) => {
+  const confirmReturn = async (itemId) => {
     try {
-      const itemToReturn = items[index];
+      const itemToReturn = items.find(item => item._id === itemId);
 
-      if (!itemToReturn._id) {
+      if (!itemToReturn) {
         toast.error("Invalid item ID. Please try again.");
         return;
       }
@@ -139,7 +139,7 @@ const Equipment = () => {
       const token = localStorage.getItem("token");
 
       const response = await axios.put(
-        `${baseURL}/equipments/${itemToReturn._id}`,
+        `${baseURL}/equipments/${itemId}`,
         updatedItem,
         {
           headers: {
@@ -148,8 +148,9 @@ const Equipment = () => {
         }
       );
 
-      const updatedItems = [...items];
-      updatedItems[index] = response.data;
+      const updatedItems = items.map(item =>
+        item._id === itemId ? response.data : item
+      );
       setItems(updatedItems);
       toast.dismiss();
       toast.success("Item returned successfully!");
@@ -180,10 +181,10 @@ const Equipment = () => {
 
       <div className="flex justify-between mb-4">
         <div>
-          <button onClick={() => setShowReturned(false)} className={`py-2 px-4 ${!showReturned ? "TopNav focus:outline-none focus:ring-1 focus:ring-blue5 " : "TopNav"}`}>
+          <button onClick={() => setShowReturned(false)} className={`py-2 px-4 ${!showReturned ? "TopNav focus:outline-none focus:ring-1 focus:ring-blue-500" : "TopNav"}`}>
             Currently Borrowed
           </button>
-          <button onClick={() => setShowReturned(true)} className={`py-2 px-4 ml-1 ${showReturned ? "TopNav focus:outline-none focus:ring-1 focus:ring-blue5" : "TopNav"}`}>
+          <button onClick={() => setShowReturned(true)} className={`py-2 px-4 ml-1 ${showReturned ? "TopNav focus:outline-none focus:ring-1 focus:ring-blue-500" : "TopNav"}`}>
             Returned Items
           </button>
         </div>
@@ -252,7 +253,7 @@ const Equipment = () => {
       )}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+        <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden TopNav">
           <thead className="TopNav">
             <tr>
               <th className="py-2 px-4">Item Name</th>
@@ -265,28 +266,22 @@ const Equipment = () => {
           <tbody>
             {filteredItems.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center py-4">
-                  No items found.
-                </td>
+                <td colSpan="5" className="text-center py-4">No items found</td>
               </tr>
             ) : (
-              filteredItems.map((item, index) => (
-                <tr key={index} className="border-b text-black text-center">
+              filteredItems.map(item => (
+                <tr key={item._id} className="text-center hover:cursor-pointer">
                   <td className="py-2 px-4">{item.name}</td>
                   <td className="py-2 px-4">{formatDate(item.borrowDate)}</td>
                   <td className="py-2 px-4">{formatDate(item.returnDate)}</td>
                   <td className="py-2 px-4">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="w-24 h-24 object-cover"
-                    />
+                    <img src={item.imageUrl} alt={item.name} className="w-24 h-24 object-cover" />
                   </td>
                   <td className="py-2 px-4">
                     {item.returnDate === "1970-01-01T00:00:00.000Z" && (
                       <button
-                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded"
-                        onClick={() => handleReturn(index)}
+                        onClick={() => handleReturn(item._id)}
+                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
                       >
                         Return
                       </button>

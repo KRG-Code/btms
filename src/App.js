@@ -68,7 +68,7 @@ function App() {
                   element={<ProtectedRoute userTypeAllowed={["tanod"]}><Schedule /></ProtectedRoute>}
                 />
                 <Route
-                  path="/Incidents"
+                  path="/Patrolreport"
                   element={<ProtectedRoute userTypeAllowed={["tanod"]}><Incidents /></ProtectedRoute>}
                 />
                 

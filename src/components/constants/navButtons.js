@@ -6,7 +6,7 @@ export const buttonData = [
   { label: "DashBoard", icon: <RiDashboardLine /> },
   { label: "Patrol Map", icon: <RiRoadMapLine /> },
   { label: "Schedule", icon: <RiCalendarScheduleLine /> },
-  { label: "Incidents", icon: <RiAlertLine /> },
+  { label: "Patrol Report", icon: <RiAlertLine /> },
   { label: "Performance", icon: <RiUserStarLine /> },
   { label: "Equipments", icon: <RiToolsLine /> },
   ];
