@@ -73,7 +73,7 @@ export default function SideNav() {
       <aside className={`SideNav mr-5 text-text h-full ${isOpen ? "SideNav-open" : "SideNav-close"} flex flex-col items-center rounded-2xl`}>
         <div className="p-4 flex flex-col items-center">
           <RiGovernmentFill className="text-4xl mb-2 text-blue-900" />
-          <div className="text-lg font-bold">BTMS</div>
+          <div className="text-lg font-bold">BTPMS</div>
         </div>
         <nav className="mt-10 flex-grow flex flex-col">
           <ul className="w-full">

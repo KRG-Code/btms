@@ -23,7 +23,7 @@ const SelectionPage = () => {
       </span>
       <div className="flex flex-col items-center mt-20">
         <RiGovernmentFill className="text-6xl mb-2 text-blue-900" />
-        <div className="text-2xl font-bold text-center">BARANGAY TANOD MANAGEMENT SYSTEM</div><br />
+        <div className="text-2xl font-bold text-center">BARANGAY TANOD PATROL MANAGEMENT SYSTEM</div><br />
         <h1 className="text-3xl font-bold mb-8 text-center">Select Login Type</h1>
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
           <div
