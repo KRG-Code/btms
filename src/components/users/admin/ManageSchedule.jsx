@@ -15,6 +15,7 @@ export default function ScheduleMaker() {
   const [currentScheduleId, setCurrentScheduleId] = useState(null);
   const [scheduleMembers, setScheduleMembers] = useState([]);
   const [showMembersTable, setShowMembersTable] = useState(false);
+  const [loadingSchedules, setLoadingSchedules] = useState(false); // New loading state
 
   useEffect(() => {
     const fetchTanods = async () => {
@@ -67,7 +68,7 @@ export default function ScheduleMaker() {
         toast.success("Schedule created successfully!");
       }
 
-      setShowForm(false);
+      resetForm(); // Reset the form after submission
     } catch (error) {
       console.error("Error creating/updating schedule:", error);
       toast.error("Error creating/updating schedule.");
@@ -76,6 +77,7 @@ export default function ScheduleMaker() {
 
   useEffect(() => {
     const fetchSchedules = async () => {
+      setLoadingSchedules(true); // Set loading to true
       const token = localStorage.getItem("token");
       if (!token) return;
 
@@ -87,6 +89,8 @@ export default function ScheduleMaker() {
       } catch (error) {
         console.error("Error fetching schedules:", error);
         toast.error("Error fetching schedules.");
+      } finally {
+        setLoadingSchedules(false); // Set loading to false
       }
     };
 
@@ -105,6 +109,7 @@ export default function ScheduleMaker() {
     setEndTime("");
     setIsEditing(false);
     setCurrentScheduleId(null);
+    setShowForm(false); // Hide the form after resetting
   };
 
   const handleViewMembers = async (schedule) => {
@@ -175,13 +180,13 @@ export default function ScheduleMaker() {
       </button>
 
       {showForm && (
-        <form onSubmit={handleCreateOrUpdateSchedule} className="mb-4 p-4 border rounded-lg shadow-lg">
+        <form onSubmit={handleCreateOrUpdateSchedule} className="mb-4 p-4 border rounded-lg shadow-lg TopNav">
           <div className="mb-4">
             <label className="block mb-1">Unit:</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="border p-2 rounded w-full"
+              className="border p-2 rounded w-full text-black"
             >
               <option value="Unit 1">Unit 1</option>
               <option value="Unit 2">Unit 2</option>
@@ -197,7 +202,7 @@ export default function ScheduleMaker() {
               onChange={(e) =>
                 setSelectedTanods([...e.target.selectedOptions].map((option) => option.value))
               }
-              className="border p-2 rounded w-full"
+              className="border p-2 rounded w-full text-black"
             >
               {tanods.map((tanod) => (
                 <option key={tanod._id} value={tanod._id}>
@@ -211,9 +216,9 @@ export default function ScheduleMaker() {
             <label className="block mb-1">Start Time:</label>
             <input
               type="datetime-local"
-              value={startTime}
+              value={startTime ? new Date(startTime).toLocaleString('sv').slice(0, 16) : ""}
               onChange={(e) => setStartTime(e.target.value)}
-              className="border p-2 rounded w-full"
+              className="border p-2 rounded w-full text-black"
               required
             />
           </div>
@@ -222,9 +227,9 @@ export default function ScheduleMaker() {
             <label className="block mb-1">End Time:</label>
             <input
               type="datetime-local"
-              value={endTime}
+              value={endTime ? new Date(endTime).toLocaleString('sv').slice(0, 16) : ""}
               onChange={(e) => setEndTime(e.target.value)}
-              className="border p-2 rounded w-full"
+              className="border p-2 rounded w-full text-black"
               required
             />
           </div>
@@ -241,51 +246,63 @@ export default function ScheduleMaker() {
       )}
 
       <h2 className="text-xl font-bold mb-4">Scheduled Patrols</h2>
-      <table className="min-w-full bg-white border TopNav text-center">
-        <thead>
+      <table className="min-w-full bg-white border text-center TopNav">
+        <thead className="border">
           <tr>
-            <th>Unit</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-            <th>Actions</th>
+            <th className="border">Unit</th>
+            <th className="border">Start Time</th>
+            <th className="border">End Time</th>
+            <th className="border">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {schedules.map((schedule) => (
-            <tr key={schedule._id}>
-              <td>{schedule.unit}</td>
-              <td>{new Date(schedule.startTime).toLocaleString()}</td>
-              <td>{new Date(schedule.endTime).toLocaleString()}</td>
-              <td>
-                <button
-                  className="bg-green-500 text-white px-2 py-1 rounded mx-1"
-                  onClick={() => handleViewMembers(schedule)}
-                >
-                  View Members
-                </button>
-                <button
-                  className="bg-yellow-500 text-white px-2 py-1 rounded mx-1"
-                  onClick={() => {
-                    setUnit(schedule.unit);
-                    setSelectedTanods(schedule.tanods.map((tanod) => tanod._id));
-                    setStartTime(schedule.startTime);
-                    setEndTime(schedule.endTime);
-                    setCurrentScheduleId(schedule._id);
-                    setIsEditing(true);
-                    setShowForm(true);
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="bg-red-500 text-white px-2 py-1 rounded mx-1"
-                  onClick={() => handleDeleteSchedule(schedule._id)}
-                >
-                  Delete
-                </button>
+          {loadingSchedules ? ( // Show loading message if loading
+            <tr>
+              <td colSpan="4" className="text-center py-4">
+                Loading Schedules...
               </td>
             </tr>
-          ))}
+          ) : schedules.length === 0 ? (
+            <tr>
+              <td colSpan="4" className="text-center py-4">No schedules found.</td>
+            </tr>
+          ) : (
+            schedules.map((schedule) => (
+              <tr key={schedule._id}>
+                <td className="border">{schedule.unit}</td>
+                <td className="border">{new Date(schedule.startTime).toLocaleString()}</td>
+                <td className="border">{new Date(schedule.endTime).toLocaleString()}</td>
+                <td className="border">
+                  <button
+                    className="bg-green-500 text-white px-2 py-1 rounded mx-1 my-3"
+                    onClick={() => handleViewMembers(schedule)}
+                  >
+                    View Members
+                  </button>
+                  <button
+                    className="bg-yellow-500 text-white px-2 py-1 rounded mx-1"
+                    onClick={() => {
+                      setUnit(schedule.unit);
+                      setSelectedTanods(schedule.tanods.map((tanod) => tanod._id));
+                      setStartTime(schedule.startTime);
+                      setEndTime(schedule.endTime);
+                      setCurrentScheduleId(schedule._id);
+                      setIsEditing(true);
+                      setShowForm(true);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="bg-red-500 text-white px-2 py-1 rounded mx-1"
+                    onClick={() => handleDeleteSchedule(schedule._id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 
@@ -300,7 +317,7 @@ export default function ScheduleMaker() {
               Close
             </button>
           </h2>
-          <table className="min-w-full bg-white border TopNav text-center">
+          <table className="min-w-full bg-white border text-center TopNav">
             <thead>
               <tr>
                 <th>Profile Picture</th>
@@ -308,18 +325,18 @@ export default function ScheduleMaker() {
                 <th>Contact Number</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="border">
               {scheduleMembers.map((member) => (
                 <tr key={member._id}>
-                  <td>
+                  <td className="border">
                     <img
                       src={member.profilePicture || "https://via.placeholder.com/50"}
                       alt={member.firstName}
-                      className="w-10 h-10 rounded-full mx-auto"
+                      className="w-10 h-10 rounded-full mx-auto "
                     />
                   </td>
-                  <td>{`${member.firstName} ${member.lastName}`}</td>
-                  <td>{member.contactNumber || "N/A"}</td>
+                  <td className="border">{`${member.firstName} ${member.lastName}`}</td>
+                  <td className="border">{member.contactNumber || "N/A"}</td>
                 </tr>
               ))}
             </tbody>

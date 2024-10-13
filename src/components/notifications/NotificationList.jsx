@@ -125,7 +125,7 @@ export default function NotificationList({ onClose }) {
           {notifications.slice().reverse().map((notification) => (
             <li
               key={notification._id}
-              className={`p-2 flex justify-between items-center ${notification.read ? "bg-gray-100" : "bg-gray-200"} rounded TopNav`}
+              className={`p-2 flex justify-between items-center ${notification.read ? "bg-gray-100" : "bg-gray-200"} hover:cursor-pointer rounded TopNav`}
             >
               <div>
                 {notification.message}

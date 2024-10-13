@@ -18,7 +18,6 @@ export default function TopNav() {
   const navigate = useNavigate();
   const { toggleSideNav } = useCombinedContext();
 
-  // Handle click outside to close dropdowns
   const handleClickOutside = (event) => {
     if (
       dropdownRef.current && !dropdownRef.current.contains(event.target) &&
@@ -44,12 +43,11 @@ export default function TopNav() {
 
     checkUnreadNotifications();
 
-    // Close dropdown when clicking outside
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []); // No need to add handleClickOutside in dependencies as it's defined in the same scope
+  }, []);
 
   const checkUnreadNotifications = async () => {
     const token = localStorage.getItem("token");
@@ -111,7 +109,9 @@ export default function TopNav() {
     navigate("/myaccount");
   };
 
-  const navItems = [{ id: 1, component: <ThemeToggle />, label: "Theme Toggle" }];
+  const navItems = [
+    { id: 1, component: <ThemeToggle />, label: "Theme Toggle" },
+  ];
 
   return (
     <aside className="rounded-2xl TopNav relative">
@@ -137,7 +137,7 @@ export default function TopNav() {
             <button onClick={toggleNotificationsDropdown} className="text-2xl p-1 relative" title="Notifications">
               <RiNotification3Line />
               {hasUnreadNotifications && (
-                <span className="absolute top-0 right-0 inline-block w-3 h-3 bg-red-500 rounded-full"></span>
+                <span className="absolute top-0 right-0 inline-block w-3 h-3 bg-red-500 rounded-full pulse"></span>
               )}
             </button>
             {showNotificationList && <NotificationList onClose={toggleNotificationsDropdown} />}

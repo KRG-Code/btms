@@ -115,7 +115,7 @@ export default function TanodPersonels() {
 
       {/* Tanod Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border TopNav">
+        <table className="min-w-full border TopNav">
           <thead>
             <tr>
               <th className="py-2 px-4 border">Profile Picture</th>
@@ -205,22 +205,22 @@ export default function TanodPersonels() {
           ) : filteredItems.length === 0 ? (
             <p>No equipment found.</p>
           ) : (
-            <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-              <thead className="TopNav">
+            <table className="min-w-full bg-white shadow-md border overflow-hidden TopNav">
+              <thead>
                 <tr>
-                  <th className="py-2 px-4">Item Name</th>
-                  <th className="py-2 px-4">Borrow Date & Time</th>
-                  <th className="py-2 px-4">Return Date & Time</th>
-                  <th className="py-2 px-4">Item Image</th>
+                  <th className="py-2 px-4 border">Item Name</th>
+                  <th className="py-2 px-4 border">Borrow Date & Time</th>
+                  <th className="py-2 px-4 border">Return Date & Time</th>
+                  <th className="py-2 px-4 border">Item Image</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredItems.map((item, index) => (
-                  <tr key={index} className="border-b text-black text-center">
-                    <td className="py-2 px-4">{item.name}</td>
-                    <td className="py-2 px-4">{formatDate(item.borrowDate)}</td>
-                    <td className="py-2 px-4">{formatDate(item.returnDate)}</td>
-                    <td className="py-2 px-4">
+                  <tr key={index} className=" text-center">
+                    <td className="py-2 px-4 border">{item.name}</td>
+                    <td className="py-2 px-4 border">{formatDate(item.borrowDate)}</td>
+                    <td className="py-2 px-4 border">{formatDate(item.returnDate)}</td>
+                    <td className="py-2 px-4 border">
                       <img
                         src={item.imageUrl}
                         alt={item.name}

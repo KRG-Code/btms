@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEdit } from "react-icons/fa";
 import { compressImage } from "../../../utils/ImageCompression";
-import { toast, ToastContainer } from "react-toastify"; // Import Toastify
-import "react-toastify/dist/ReactToastify.css"; // Import Toastify CSS
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Firebase imports
-import { storage } from "../../../firebase"; // Firebase storage instance
+import { toast, ToastContainer } from "react-toastify"; 
+import "react-toastify/dist/ReactToastify.css"; 
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; 
+import { storage } from "../../../firebase"; 
+import Loading from "../../../utils/Loading";
 
 export default function MyAcc() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ export default function MyAcc() {
     confirmNewPassword: "",
   });
   const [loading, setLoading] = useState(false);
+  const [loadingUserData, setLoadingUserData] = useState(true); // New loading state
 
   const calculateAge = (birthday) => {
     const today = new Date();
@@ -50,6 +52,8 @@ export default function MyAcc() {
         navigate("/login");
         return;
       }
+
+      setLoadingUserData(true); // Start loading user data
 
       try {
         const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
@@ -78,6 +82,8 @@ export default function MyAcc() {
         }
       } catch (error) {
         toast.error("An error occurred while fetching user data.");
+      } finally {
+        setLoadingUserData(false); // End loading user data
       }
     };
 
@@ -94,16 +100,13 @@ export default function MyAcc() {
     const file = e.target.files[0];
     if (file) {
       try {
-        // Compress the image file
-        const compressedFile = await compressImage(file); // Make sure compressImage returns a Blob or File
-
-        // Create a URL for the compressed image to display
+        const compressedFile = await compressImage(file);
         const imageUrl = URL.createObjectURL(compressedFile);
-        setLocalProfilePicture(imageUrl); // Set the temporary URL for preview
+        setLocalProfilePicture(imageUrl);
         setAccountState((prevState) => ({
           ...prevState,
           profilePicture: compressedFile,
-        })); // Store the compressed file for upload
+        }));
         toast.success("Profile picture selected!");
       } catch (error) {
         toast.error("Error processing profile picture. Please try again.");
@@ -116,27 +119,19 @@ export default function MyAcc() {
     setLoading(true);
     const token = localStorage.getItem("token");
 
-    // If there's a local profile picture, upload it to Firebase
-    let updatedProfilePictureURL = accountState.profilePicture; // This will be a compressed file object
+    let updatedProfilePictureURL = accountState.profilePicture;
     if (updatedProfilePictureURL) {
       try {
-        const storageRef = ref(
-          storage,
-          `userprofiles/${updatedProfilePictureURL.name}`
-        ); // Folder for user profiles
-        const snapshot = await uploadBytes(
-          storageRef,
-          updatedProfilePictureURL
-        );
-        updatedProfilePictureURL = await getDownloadURL(snapshot.ref); // Get the Firebase URL
+        const storageRef = ref(storage, `userprofiles/${updatedProfilePictureURL.name}`);
+        const snapshot = await uploadBytes(storageRef, updatedProfilePictureURL);
+        updatedProfilePictureURL = await getDownloadURL(snapshot.ref);
       } catch (error) {
         toast.error("Error uploading profile picture. Please try again.");
         setLoading(false);
-        return; // Stop further execution if profile picture upload fails
+        return;
       }
     }
 
-    // Update the account state with the new profile picture URL (if it was changed)
     const updatedAccountState = {
       ...accountState,
       profilePicture: updatedProfilePictureURL,
@@ -156,7 +151,7 @@ export default function MyAcc() {
       if (response.ok) {
         toast.success("Profile updated successfully!");
         setIsEditing(false);
-        setLocalProfilePicture(null); // Clear local state after saving changes
+        setLocalProfilePicture(null);
       } else {
         toast.error(data.message || "Failed to update profile.");
       }
@@ -175,17 +170,14 @@ export default function MyAcc() {
     }
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/auth/change-password`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(passwords),
-        }
-      );
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(passwords),
+      });
 
       const data = await response.json();
       if (response.ok) {
@@ -203,19 +195,25 @@ export default function MyAcc() {
 
   return (
     <div className="container mx-auto mt-8 space-y-6 ">
-      <ToastContainer /> {/* Include the ToastContainer */}
+      <ToastContainer />
       <div className="flex ml-3">
         <div className="w-1/3">
           <div className="relative">
-            <img
-              src={
-                localProfilePicture ||
-                accountState.profilePicture ||
-                "/default-user-icon.png"
-              }
-              alt="Profile"
-              className="rounded-full w-32 h-32 object-cover border-2 border-gray-200"
-            />
+            {loadingUserData ? (
+              <div className="flex justify-center items-center h-32">
+                <Loading type="spinner" /> {/* Display loading indicator */}
+              </div>
+            ) : (
+              <img
+                src={
+                  localProfilePicture ||
+                  accountState.profilePicture ||
+                  "/default-user-icon.png"
+                }
+                alt="Profile"
+                className="rounded-full w-32 h-32 object-cover border-2 border-gray-200"
+              />
+            )}
             {isEditing && (
               <label
                 htmlFor="profilePicture"

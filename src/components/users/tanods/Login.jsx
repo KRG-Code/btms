@@ -9,6 +9,7 @@ import { validateLoginTanod } from '../../../utils/validation';
 import { toast, ToastContainer } from 'react-toastify'; 
 import 'react-toastify/dist/ReactToastify.css'; 
 import { useCombinedContext } from "../../../contexts/useContext"; // Import context
+import Loading from "../../../utils/Loading";
 
 const fieldsState = loginFieldsTanod.reduce((acc, field) => {
   acc[field.id] = '';
@@ -86,7 +87,7 @@ export default function LoginTanod() {
             </div>
           ))}
         </div>
-        {loading && <p>Loading...</p>}
+        {loading && <Loading type="bar" />}
         <FormExtra />
         <FormAction handleSubmit={handleSubmit} text="Login" />
       </form>

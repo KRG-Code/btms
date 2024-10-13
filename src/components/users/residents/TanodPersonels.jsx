@@ -225,25 +225,25 @@ export default function TanodPersonels() {
       <table className="min-w-full TopNav">
         <thead>
           <tr>
-            <th className="py-2 px-4 border-b text-center">Profile Picture</th>
-            <th className="py-2 px-4 border-b text-center">Name</th>
-            <th className="py-2 px-4 border-b text-center">Action</th>
+            <th className="py-2 px-4 border text-center">Profile Picture</th>
+            <th className="py-2 px-4 border text-center">Name</th>
+            <th className="py-2 px-4 border text-center">Action</th>
           </tr>
         </thead>
         <tbody className="bg-white TopNav">
           {tanods.map((tanod) => (
             <tr key={tanod._id} className="hover:cursor-pointer">
-              <td className="py-2 px-4 border-b text-center">
+              <td className="py-2 px-4 border text-center">
                 <img
                   src={tanod.profilePicture || "/default-user-icon.png"}
                   alt={`${tanod.firstName} ${tanod.lastName}`}
                   className="w-12 h-12 rounded-full mx-auto"
                 />
               </td>
-              <td className="py-2 px-4 border-b text-center">
+              <td className="py-2 px-4 border text-center">
                 {tanod.firstName} {tanod.lastName}
               </td>
-              <td className="py-2 px-4 border-b text-center">
+              <td className="py-2 px-4 border text-center">
                 <button
                   onClick={() => setSelectedTanod(tanod._id)}
                   className="bg-blue-500 text-white px-2 py-1 rounded"
@@ -263,10 +263,10 @@ export default function TanodPersonels() {
           <table className="min-w-full TopNav">
             <thead>
               <tr>
-                <th className="py-2 px-4 border-b">Tanod Name</th>
-                <th className="py-2 px-4 border-b">Rating</th>
-                <th className="py-2 px-4 border-b">Comment</th>
-                <th className="py-2 px-4 border-b">Actions</th>
+                <th className="py-2 px-4 border">Tanod Name</th>
+                <th className="py-2 px-4 border">Rating</th>
+                <th className="py-2 px-4 border">Comment</th>
+                <th className="py-2 px-4 border">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -275,13 +275,13 @@ export default function TanodPersonels() {
                   <td className="py-2 px-4 border-b text-center">
                     {rating.tanodId.firstName} {rating.tanodId.lastName}
                   </td>
-                  <td className="py-2 px-4 border-b text-center">
+                  <td className="py-2 px-4 border text-center">
                     {rating.rating}
                   </td>
-                  <td className="py-2 px-4 border-b text-center">
+                  <td className="py-2 px-4 border text-center">
                     {rating.comment}
                   </td>
-                  <td className="py-2 px-4 border-b text-center">
+                  <td className="py-2 px-4 border text-center">
                     <button
                       onClick={() => editRating(rating)}
                       className="bg-yellow-500 text-white px-2 py-1 rounded"

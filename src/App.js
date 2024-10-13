@@ -4,6 +4,7 @@ import Layout from "./components/layout/Layout";
 import { CombinedProvider } from "./contexts/useContext";
 import { ToastContainer } from "react-toastify";
 import ProtectedRoute from "./utils/ProtectedRoute";
+import Loading from "./utils/Loading";
 
 const SelectionPage = lazy(() => import("./pages/SelectionPage"));
 const SignupPage = lazy(() => import("./pages/Signup"));
@@ -34,7 +35,7 @@ function App() {
     <div className="flex-1 p-6 bg-background text-text">
       <BrowserRouter>
         <CombinedProvider>
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<div className="flex items-center justify-center min-h-screen" ><Loading type="spinner" /></div>}>
             <ToastContainer />
             <Routes>
               {/* Public Routes */}
