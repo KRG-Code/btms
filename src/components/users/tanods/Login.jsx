@@ -47,16 +47,13 @@ export default function LoginTanod() {
       const data = await response.json();
 
       if (response.ok) {
-        // Call login from context to set token and fetch user data
         await login(data.token);
-
-        // Handle navigation based on userType
         if (data.userType === 'admin') {
           toast.success('Logged in as Admin!');
-          navigate('/admindashboard'); // Admin dashboard
+          navigate('/admindashboard'); 
         } else if (data.userType === 'tanod') {
           toast.success('Logged in successfully as Tanod!');
-          navigate('/dashboard'); // Tanod dashboard
+          navigate('/dashboard'); 
         } else {
           toast.error('Unauthorized user type');
         }
@@ -64,7 +61,7 @@ export default function LoginTanod() {
         toast.error(data.message || 'Invalid login credentials');
       }
     } catch (error) {
-      console.error('Login Error:', error); // Log error for debugging
+      console.error('Login Error:', error);
       toast.error('An error occurred. Please try again.');
     } finally {
       setLoading(false);

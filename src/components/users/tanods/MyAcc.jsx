@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { FaEdit } from "react-icons/fa";
+import { useNavigate, Navigate  } from "react-router-dom";
+import { FaEdit, FaEye, FaEyeSlash } from "react-icons/fa";
 import { compressImage } from "../../../utils/ImageCompression";
-import { toast, ToastContainer } from "react-toastify"; 
-import "react-toastify/dist/ReactToastify.css"; 
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; 
-import { storage } from "../../../firebase"; 
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../../../firebase";
 import Loading from "../../../utils/Loading";
 
 export default function MyAcc() {
@@ -30,6 +30,9 @@ export default function MyAcc() {
   });
   const [loading, setLoading] = useState(false);
   const [loadingUserData, setLoadingUserData] = useState(true); // New loading state
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const calculateAge = (birthday) => {
     const today = new Date();
@@ -56,12 +59,15 @@ export default function MyAcc() {
       setLoadingUserData(true); // Start loading user data
 
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/auth/me`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         const data = await response.json();
         if (response.ok) {
@@ -95,7 +101,6 @@ export default function MyAcc() {
     setAccountState((prevState) => ({ ...prevState, [id]: value }));
   };
 
-  // Handle profile picture upload to Firebase
   const handleProfilePictureChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -122,8 +127,14 @@ export default function MyAcc() {
     let updatedProfilePictureURL = accountState.profilePicture;
     if (updatedProfilePictureURL) {
       try {
-        const storageRef = ref(storage, `userprofiles/${updatedProfilePictureURL.name}`);
-        const snapshot = await uploadBytes(storageRef, updatedProfilePictureURL);
+        const storageRef = ref(
+          storage,
+          `userprofiles/${updatedProfilePictureURL.name}`
+        );
+        const snapshot = await uploadBytes(
+          storageRef,
+          updatedProfilePictureURL
+        );
         updatedProfilePictureURL = await getDownloadURL(snapshot.ref);
       } catch (error) {
         toast.error("Error uploading profile picture. Please try again.");
@@ -138,14 +149,17 @@ export default function MyAcc() {
     };
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/update`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatedAccountState),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/auth/update`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedAccountState),
+        }
+      );
 
       const data = await response.json();
       if (response.ok) {
@@ -162,26 +176,70 @@ export default function MyAcc() {
     }
   };
 
+
+
   const handlePasswordChange = async (e) => {
     e.preventDefault();
+  
+    // Validation checks
+    if (
+      !passwords.currentPassword ||
+      !passwords.newPassword ||
+      !passwords.confirmNewPassword
+    ) {
+      toast.error("All fields are required.");
+      return;
+    }
+    
+    if (passwords.newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters long.");
+      return;
+    }
+  
+    if (passwords.newPassword === passwords.currentPassword) {
+      toast.error("New password cannot be the same as the current password.");
+      return;
+    }
+  
     if (passwords.newPassword !== passwords.confirmNewPassword) {
       toast.error("New passwords do not match.");
       return;
     }
+  
+    setLoading(true);
+  
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/change-password`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(passwords),
-      });
-
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/auth/change-password`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(passwords),
+        }
+      );
+  
       const data = await response.json();
+  
       if (response.ok) {
         toast.success("Password changed successfully!");
+  
+        // Clear local storage
+        localStorage.removeItem("token");
+        localStorage.removeItem("userType");
+  
+        // Redirect to the root path
+        navigate("/");
+  
+        // Clear password fields
+        setPasswords({
+          currentPassword: "",
+          newPassword: "",
+          confirmNewPassword: "",
+        });
         setIsChangingPassword(false);
       } else if (response.status === 401) {
         toast.error("Current password is incorrect.");
@@ -189,10 +247,15 @@ export default function MyAcc() {
         toast.error(data.message || "Failed to change password.");
       }
     } catch (error) {
+      console.error("Password Change Error:", error);
       toast.error("An error occurred while changing the password.");
+    } finally {
+      setLoading(false);
     }
   };
+  
 
+  
   return (
     <div className="container mx-auto mt-8 space-y-6 ">
       <ToastContainer />
@@ -354,72 +417,99 @@ export default function MyAcc() {
           </form>
 
           {isChangingPassword && (
-            <form className="mt-8 space-y-6" onSubmit={handlePasswordChange}>
-              <div className="text-lg">
-                <label htmlFor="currentPassword" className="font-semibold">
-                  Current Password:{" "}
-                </label>
-                <input
-                  type="password"
-                  id="currentPassword"
-                  value={passwords.currentPassword}
-                  onChange={(e) =>
-                    setPasswords({
-                      ...passwords,
-                      currentPassword: e.target.value,
-                    })
-                  }
-                  className="border px-2 py-1 text-black"
-                />
-              </div>
-
-              <div className="text-lg">
-                <label htmlFor="newPassword" className="font-semibold">
-                  New Password:{" "}
-                </label>
-                <input
-                  type="password"
-                  id="newPassword"
-                  value={passwords.newPassword}
-                  onChange={(e) =>
-                    setPasswords({ ...passwords, newPassword: e.target.value })
-                  }
-                  className="border px-2 py-1 text-black"
-                />
-              </div>
-
-              <div className="text-lg">
-                <label htmlFor="confirmNewPassword" className="font-semibold">
-                  Confirm New Password:{" "}
-                </label>
-                <input
-                  type="password"
-                  id="confirmNewPassword"
-                  value={passwords.confirmNewPassword}
-                  onChange={(e) =>
-                    setPasswords({
-                      ...passwords,
-                      confirmNewPassword: e.target.value,
-                    })
-                  }
-                  className="border px-2 py-1 text-black"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="mt-6 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-              >
-                Change Password
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsChangingPassword(false)}
-                className="mt-6 ml-6 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            </form>
+             <form className="mt-8 space-y-6" onSubmit={handlePasswordChange}>
+             <div className="text-lg">
+               <label htmlFor="currentPassword" className="font-semibold">
+                 Current Password:{" "}
+               </label>
+               <div className="relative">
+                 <input
+                   type={showCurrentPassword ? "text" : "password"}
+                   id="currentPassword"
+                   value={passwords.currentPassword}
+                   onChange={(e) =>
+                     setPasswords({
+                       ...passwords,
+                       currentPassword: e.target.value,
+                     })
+                   }
+                   className="border px-2 py-1 text-black w-full pr-10"
+                 />
+                 <button
+                   type="button"
+                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                   className="absolute right-2 top-1/2 transform -translate-y-1/2 focus:outline-none text-black"
+                 >
+                   {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+                 </button>
+               </div>
+             </div>
+       
+             <div className="text-lg">
+               <label htmlFor="newPassword" className="font-semibold">
+                 New Password:{" "}
+               </label>
+               <div className="relative">
+                 <input
+                   type={showNewPassword ? "text" : "password"}
+                   id="newPassword"
+                   value={passwords.newPassword}
+                   onChange={(e) =>
+                     setPasswords({ ...passwords, newPassword: e.target.value })
+                   }
+                   className="border px-2 py-1 text-black w-full pr-10"
+                 />
+                 <button
+                   type="button"
+                   onClick={() => setShowNewPassword(!showNewPassword)}
+                   className="absolute right-2 top-1/2 transform -translate-y-1/2 focus:outline-none text-black"
+                 >
+                   {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                 </button>
+               </div>
+             </div>
+       
+             <div className="text-lg">
+               <label htmlFor="confirmNewPassword" className="font-semibold">
+                 Confirm New Password:{" "}
+               </label>
+               <div className="relative">
+                 <input
+                   type={showConfirmPassword ? "text" : "password"}
+                   id="confirmNewPassword"
+                   value={passwords.confirmNewPassword}
+                   onChange={(e) =>
+                     setPasswords({
+                       ...passwords,
+                       confirmNewPassword: e.target.value,
+                     })
+                   }
+                   className="border px-2 py-1 text-black w-full pr-10"
+                 />
+                 <button
+                   type="button"
+                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                   className="absolute right-2 top-1/2 transform -translate-y-1/2 focus:outline-none text-black"
+                 >
+                   {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                 </button>
+               </div>
+             </div>
+       
+             <button
+               type="submit"
+               className="mt-6 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+             >
+               Change Password
+             </button>
+             <button
+               type="button"
+               onClick={() => setIsChangingPassword(false)}
+               className="mt-6 ml-6 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+             >
+               Cancel
+             </button>
+           </form>
           )}
         </div>
       </div>
