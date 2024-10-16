@@ -93,7 +93,6 @@ export default function Perform() {
                 const data = await response.json();
                 if (response.ok) {
                     setTanod(data);
-                    setLoadingComments(false);
                 } else {
                     toast.error(data.message || "Failed to load Tanod ratings");
                 }
@@ -101,6 +100,7 @@ export default function Perform() {
                 toast.error("An error occurred while fetching Tanod ratings.");
             } finally {
                 setLoadingRatings(false);
+                setLoadingComments(false); // Ensure loadingComments is set to false here
             }
         };
 
@@ -112,7 +112,7 @@ export default function Perform() {
             <div className="flex flex-col items-center md:items-start md:w-1/2 mb-4 md:mb-0">
                 <div className="flex items-center justify-center mb-4">
                     {loadingUserProfile ? (
-                        <Loading type="spinner" /> // Use the Loading component for the profile picture
+                        <Loading type="spinner" />
                     ) : (
                         <img
                             src={user.profilePicture || "/default-user-icon.png"}
@@ -158,6 +158,8 @@ export default function Perform() {
                     <ul className="list-disc pl-5 mt-3">
                         {loadingComments ? (
                             <li className="mb-2">Loading Comments...</li>
+                        ) : tanod.comments.length === 0 ? (
+                            <li className="mb-2">No ratings and feedback yet.</li>
                         ) : (
                             tanod.comments.map((commentData, index) => {
                                 const userName = commentData.fullName || "Unknown User";

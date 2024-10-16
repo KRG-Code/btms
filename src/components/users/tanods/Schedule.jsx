@@ -8,42 +8,39 @@ export default function TanodSchedule() {
   const [schedules, setSchedules] = useState([]);
   const [scheduleMembers, setScheduleMembers] = useState([]);
   const [showMembersTable, setShowMembersTable] = useState(false);
-  const [userId, setUserId] = useState(null); // Store userId
-  const [loadingSchedules, setLoadingSchedules] = useState(false); // Loading state for schedules
-  const [loadingMembers, setLoadingMembers] = useState(false); // Loading state for members
+  const [userId, setUserId] = useState(null);
+  const [loadingSchedules, setLoadingSchedules] = useState(false);
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
-  // Fetch logged-in user's profile using /me route
   const fetchUserProfile = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       toast.error("Please log in.");
-      return;
+      return null; // Return null if no token
     }
 
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUserId(response.data._id); // Set the userId from response
+      setUserId(response.data._id);
       return response.data._id;
     } catch (error) {
       console.error("Error fetching user profile:", error);
       toast.error("Error fetching user profile.");
+      return null; // Return null on error
     }
   };
 
-  // Fetch schedules for the logged-in Tanod
   useEffect(() => {
     const fetchSchedules = async () => {
       const token = localStorage.getItem("token");
-
-      // Fetch the user profile and extract userId
       const userId = await fetchUserProfile();
       if (!token || !userId) {
         return;
       }
 
-      setLoadingSchedules(true); // Start loading schedules
+      setLoadingSchedules(true);
       try {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/auth/tanod-schedules/${userId}`,
@@ -51,23 +48,32 @@ export default function TanodSchedule() {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setSchedules(response.data); // Set schedules data
+
+        if (response.data.length === 0) {
+          setSchedules([]);
+          toast.info("No schedules set yet.");
+        } else {
+          setSchedules(response.data);
+        }
       } catch (error) {
-        console.error("Error fetching schedules:", error);
-        toast.error("Error fetching schedules.");
+        if (error.response && error.response.status === 404) {
+          setSchedules([]); // Ensure schedules are cleared
+        } else {
+          console.error("Error fetching schedules:", error);
+          toast.error("Error fetching schedules.");
+        }
       } finally {
-        setLoadingSchedules(false); // End loading schedules
+        setLoadingSchedules(false);
       }
     };
 
     fetchSchedules();
-  }, []);
+  }, []); // Ensure this runs only once
 
-  // View members of a schedule
   const handleViewMembers = async (scheduleId) => {
     const token = localStorage.getItem("token");
 
-    setLoadingMembers(true); // Start loading members
+    setLoadingMembers(true);
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}/auth/schedule/${scheduleId}/members`,
@@ -82,7 +88,7 @@ export default function TanodSchedule() {
       console.error("Error fetching members:", error);
       toast.error("Error fetching members.");
     } finally {
-      setLoadingMembers(false); // End loading members
+      setLoadingMembers(false);
     }
   };
 
@@ -104,9 +110,15 @@ export default function TanodSchedule() {
         <tbody>
           {loadingSchedules ? (
             <tr>
-              <td colSpan="4" className="text-center ">
-                <Loading type="circle" /> {/* Loading spinner while fetching schedules */}
+              <td colSpan="4" className="text-center">
+                <Loading type="circle" />
                 Loading Schedules...
+              </td>
+            </tr>
+          ) : schedules.length === 0 ? (
+            <tr>
+              <td colSpan="4" className="text-center">
+                No schedule set yet.
               </td>
             </tr>
           ) : (
@@ -129,10 +141,9 @@ export default function TanodSchedule() {
         </tbody>
       </table>
 
-      {/* Show loading spinner while schedule members are being fetched */}
       {loadingMembers ? (
         <div className="mt-8 text-center">
-          <Loading type="circle" /> {/* Loading spinner while fetching members */}
+          <Loading type="circle" />
         </div>
       ) : (
         showMembersTable && (
@@ -158,7 +169,7 @@ export default function TanodSchedule() {
                 {loadingMembers ? (
                   <tr>
                     <td colSpan="3" className="text-center">
-                      <Loading type="circle" /> {/* Loading spinner while fetching members */}
+                      <Loading type="circle" />
                       Loading Members...
                     </td>
                   </tr>
