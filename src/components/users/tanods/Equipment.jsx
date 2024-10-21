@@ -181,25 +181,25 @@ const Equipment = () => {
 
       {/* Filter Buttons and Date Input */}
       <div className="flex flex-col sm:flex-row justify-between mb-4">
-        <div className="flex flex-wrap">
-          <button 
-            onClick={() => setShowReturned(false)} 
-            className={`py-2 my-1 mx-1 px-4 w-full sm:w-auto ${!showReturned ? "TopNav focus:outline-none focus:ring-1 focus:ring-blue-500" : "TopNav"}`}
-          >
-            Currently Borrowed
-          </button>
-          <button 
-            onClick={() => setShowReturned(true)} 
-            className={`py-2 my-1 mx-1 px-4 w-full sm:w-auto ${showReturned ? "TopNav focus:outline-none focus:ring-1 focus:ring-blue-500" : "TopNav"}`}
-          >
-            Returned Items
-          </button>
-        </div>
+      <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowReturned(false)}
+                  className={`py-2 px-4 border-2 rounded-2xl ${!showReturned ? "border-blue-500" : "bg-blue-500"} TopNav`}
+                >
+                  Currently Borrowed
+                </button>
+                <button
+                  onClick={() => setShowReturned(true)}
+                  className={`py-2 px-4 border-2 rounded-2xl ${showReturned ? "border-blue-500" : "bg-blue-500"} TopNav`}
+                >
+                  Returned Items
+                </button>
+              </div>
         <input
           type="date"
           value={filterDate}
           onChange={(e) => setFilterDate(e.target.value)}
-          className="border text-black border-gray-300 p-2 rounded mt-1 sm:mt-0 sm:ml-2 w-full sm:w-48"
+          className="border border-gray-300 p-2 rounded-2xl TopNav"
         />
       </div>
 
@@ -260,7 +260,7 @@ const Equipment = () => {
       )}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow-md rounded-lg border overflow-hidden TopNav">
+        <table className="min-w-full bg-white shadow-md rounded-lg border overflow-hidden">
           <thead className="TopNav">
             <tr>
               <th className="py-2 px-4 border">Item Name</th>
@@ -270,7 +270,7 @@ const Equipment = () => {
               <th className="py-2 px-4 border">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-black">
             {filteredItems.length === 0 ? (
               <tr>
                 <td colSpan="5" className="text-center py-4">No items found</td>

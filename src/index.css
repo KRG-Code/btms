@@ -20,6 +20,15 @@
   --font-headings: "Inter", sans-serif;
 }
 
+/* Custom scrollbar hide */
+.scrollbar-hide {
+  scrollbar-width: none !important; /* For Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none !important; /* For Chrome, Safari, and Opera */
+}
+
 body{
   margin: 0;
   padding: 0;

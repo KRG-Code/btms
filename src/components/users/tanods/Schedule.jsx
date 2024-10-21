@@ -16,7 +16,7 @@ export default function TanodSchedule() {
     const token = localStorage.getItem("token");
     if (!token) {
       toast.error("Please log in.");
-      return null; // Return null if no token
+      return null;
     }
 
     try {
@@ -28,7 +28,7 @@ export default function TanodSchedule() {
     } catch (error) {
       console.error("Error fetching user profile:", error);
       toast.error("Error fetching user profile.");
-      return null; // Return null on error
+      return null;
     }
   };
 
@@ -36,39 +36,25 @@ export default function TanodSchedule() {
     const fetchSchedules = async () => {
       const token = localStorage.getItem("token");
       const userId = await fetchUserProfile();
-      if (!token || !userId) {
-        return;
-      }
+      if (!token || !userId) return;
 
       setLoadingSchedules(true);
       try {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/auth/tanod-schedules/${userId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        if (response.data.length === 0) {
-          setSchedules([]);
-          toast.info("No schedules set yet.");
-        } else {
-          setSchedules(response.data);
-        }
+        setSchedules(response.data.length ? response.data : []);
       } catch (error) {
-        if (error.response && error.response.status === 404) {
-          setSchedules([]); // Ensure schedules are cleared
-        } else {
-          console.error("Error fetching schedules:", error);
-          toast.error("Error fetching schedules.");
-        }
+        console.error("Error fetching schedules:", error);
+        toast.error("Error fetching schedules.");
       } finally {
         setLoadingSchedules(false);
       }
     };
 
     fetchSchedules();
-  }, []); // Ensure this runs only once
+  }, []);
 
   const handleViewMembers = async (scheduleId) => {
     const token = localStorage.getItem("token");
@@ -77,11 +63,8 @@ export default function TanodSchedule() {
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}/auth/schedule/${scheduleId}/members`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setScheduleMembers(response.data.tanods);
       setShowMembersTable(true);
     } catch (error) {
@@ -98,8 +81,8 @@ export default function TanodSchedule() {
       <h1 className="text-2xl font-bold mb-4">Your Schedule</h1>
 
       <h2 className="text-xl font-bold mb-4">Scheduled Patrols</h2>
-      <table className="min-w-full bg-white border TopNav text-center">
-        <thead>
+      <table className="min-w-full bg-white shadow-md rounded-lg border overflow-hidden text-center">
+        <thead className=" TopNav">
           <tr>
             <th className="border">Unit</th>
             <th className="border">Start Time</th>
@@ -107,7 +90,7 @@ export default function TanodSchedule() {
             <th className="border">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="text-black">
           {loadingSchedules ? (
             <tr>
               <td colSpan="4" className="text-center">
@@ -141,13 +124,10 @@ export default function TanodSchedule() {
         </tbody>
       </table>
 
-      {loadingMembers ? (
-        <div className="mt-8 text-center">
-          <Loading type="circle" />
-        </div>
-      ) : (
-        showMembersTable && (
-          <div className="mt-8">
+      {/* Modal for Viewing Members */}
+      {showMembersTable && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-11/12 max-w-lg relative TopNav">
             <h2 className="text-xl font-bold mb-4 flex justify-between items-center">
               Assigned Tanod Members
               <button
@@ -157,15 +137,15 @@ export default function TanodSchedule() {
                 Close
               </button>
             </h2>
-            <table className="min-w-full bg-white border TopNav text-center">
-              <thead>
+            <table className="min-w-full bg-white border text-center">
+              <thead className=" TopNav">
                 <tr>
                   <th className="border">Profile Picture</th>
                   <th className="border">Full Name</th>
                   <th className="border">Contact Number</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="text-black">
                 {loadingMembers ? (
                   <tr>
                     <td colSpan="3" className="text-center">
@@ -191,7 +171,7 @@ export default function TanodSchedule() {
               </tbody>
             </table>
           </div>
-        )
+        </div>
       )}
     </div>
   );

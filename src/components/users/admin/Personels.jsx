@@ -30,13 +30,16 @@ export default function TanodPersonels() {
 
       try {
         setLoading(true);
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/users`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/auth/users`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -108,7 +111,6 @@ export default function TanodPersonels() {
       password: newTanod.password,
       userType: "tanod",
     };
-    
 
     try {
       setLoading(true);
@@ -180,20 +182,23 @@ export default function TanodPersonels() {
 
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/users/${tanodId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/auth/users/${tanodId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete Tanod");
       }
 
       // Remove the deleted tanod from the state
-      setTanods(tanods.filter(tanod => tanod._id !== tanodId));
+      setTanods(tanods.filter((tanod) => tanod._id !== tanodId));
       toast.success("Tanod deleted successfully!");
     } catch (error) {
       console.error("Error deleting Tanod:", error);
@@ -220,8 +225,8 @@ export default function TanodPersonels() {
 
       {/* Tanod Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border TopNav">
-          <thead>
+        <table className="min-w-full bg-white shadow-md rounded-lg border overflow-hidden">
+          <thead className="TopNav">
             <tr>
               <th className="py-2 px-4 border">Profile Picture</th>
               <th className="py-2 px-4 border">Full Name</th>
@@ -230,7 +235,7 @@ export default function TanodPersonels() {
               <th className="py-2 px-4 border">Action</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-black">
             {loading ? (
               <tr>
                 <td colSpan="5" className="text-center py-4">
@@ -261,13 +266,13 @@ export default function TanodPersonels() {
                   <td className="py-2 px-4 border">{tanod.email || "N/A"}</td>
                   <td className="py-2 px-4 border">
                     <button
-                      className="bg-green-500 text-white px-2 py-1 rounded mx-1 hover:bg-green-700"
+                      className="bg-green-500 text-white w-24 h-10 rounded mx-1 my-1 hover:bg-green-700"
                       onClick={() => toast.info(`Edit ${tanod.firstName}`)}
                     >
                       Edit
                     </button>
                     <button
-                      className="bg-red-500 text-white px-2 py-1 rounded mx-1 hover:bg-red-700"
+                      className="bg-red-500 text-white w-24 h-10 rounded mx-1 my-1 hover:bg-red-700"
                       onClick={() => handleDeleteTanod(tanod._id)}
                     >
                       Delete
