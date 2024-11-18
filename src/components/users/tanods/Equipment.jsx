@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { storage } from "../../../firebase"; // Adjust as needed
+import { storage } from "../../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,48 +11,44 @@ dayjs.extend(customParseFormat);
 
 const Equipment = () => {
   const [items, setItems] = useState([]);
+  const [inventory, setInventory] = useState([]); // Load inventory for dropdown
   const [showForm, setShowForm] = useState(false);
-  const [newItem, setNewItem] = useState({ name: "", image: null });
+  const [newItem, setNewItem] = useState({ image: null });
   const [imagePreview, setImagePreview] = useState(null);
-  
-  // Filter states
+  const [selectedItem, setSelectedItem] = useState(""); // Selected inventory item
   const [showReturned, setShowReturned] = useState(false);
   const [filterDate, setFilterDate] = useState("");
 
-  const baseURL = `${process.env.REACT_APP_API_URL}`; // Adjust based on your backend server port
+  const baseURL = `${process.env.REACT_APP_API_URL}`;
 
   useEffect(() => {
     const fetchEquipments = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Unauthorized: Please log in.");
-          return;
-        }
-
         const response = await axios.get(`${baseURL}/equipments`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         setItems(response.data);
       } catch (error) {
-        console.error("Error fetching equipment", error);
-        if (error.response && error.response.status === 401) {
-          toast.error("Unauthorized: Please log in again.");
-        } else {
-          toast.error("Error fetching equipment. Please try again.");
-        }
+        toast.error("Error fetching equipment. Please try again.");
+      }
+    };
+
+    const fetchInventory = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${baseURL}/auth/inventory`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setInventory(response.data.filter((item) => item.quantity > 0));
+      } catch (error) {
+        toast.error("Failed to load inventory items.");
       }
     };
 
     fetchEquipments();
+    fetchInventory();
   }, [baseURL]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setNewItem({ ...newItem, [name]: value });
-  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -62,6 +58,11 @@ const Equipment = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const selectedInventoryItem = inventory.find(item => item._id === selectedItem);
+    if (!selectedInventoryItem) {
+      toast.error("Please select a valid item.");
+      return;
+    }
 
     const storageRef = ref(storage, `Equipments/${newItem.image.name}`);
     try {
@@ -69,32 +70,29 @@ const Equipment = () => {
       const imageUrl = await getDownloadURL(snapshot.ref);
 
       const formData = {
-        name: newItem.name,
+        name: selectedInventoryItem.name,
         borrowDate: new Date().toISOString(),
-        returnDate: "1970-01-01T00:00:00.000Z", // Set returnDate to a default value
+        returnDate: "1970-01-01T00:00:00.000Z",
         imageUrl,
       };
 
       const token = localStorage.getItem("token");
-
       const response = await axios.post(`${baseURL}/equipments`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
+      setInventory(inventory.map((item) =>
+        item._id === selectedInventoryItem._id
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      ));
       setItems([...items, response.data]);
       setShowForm(false);
-      setNewItem({ name: "", image: null });
+      setNewItem({ image: null });
       setImagePreview(null);
       toast.success("Item borrowed successfully!");
     } catch (error) {
-      console.error("Error adding equipment", error);
-      if (error.response && error.response.status === 401) {
-        toast.error("Unauthorized: Please log in again.");
-      } else {
-        toast.error("Error adding equipment. Please try again.");
-      }
+      toast.error("Error adding equipment. Please try again.");
     }
   };
 
@@ -102,76 +100,46 @@ const Equipment = () => {
     toast.info(
       <div>
         <p>Do you want to return this item?</p>
-        <button
-          className="bg-green-500 text-white p-2 rounded m-2"
-          onClick={() => confirmReturn(itemId)}
-        >
+        <button className="bg-green-500 text-white p-2 rounded m-2" onClick={() => confirmReturn(itemId)}>
           Yes
         </button>
-        <button
-          className="bg-red-500 text-white p-2 rounded m-2"
-          onClick={() => toast.dismiss()}
-        >
+        <button className="bg-red-500 text-white p-2 rounded m-2" onClick={() => toast.dismiss()}>
           No
         </button>
       </div>,
-      {
-        autoClose: false,
-      }
+      { autoClose: false }
     );
   };
 
   const confirmReturn = async (itemId) => {
     try {
       const itemToReturn = items.find(item => item._id === itemId);
-
-      if (!itemToReturn) {
-        toast.error("Invalid item ID. Please try again.");
-        return;
-      }
-
       const currentDateTime = new Date().toISOString();
-
-      const updatedItem = {
-        returnDate: currentDateTime,
-      };
-
+      const updatedItem = { returnDate: currentDateTime };
       const token = localStorage.getItem("token");
 
-      const response = await axios.put(
-        `${baseURL}/equipments/${itemId}`,
-        updatedItem,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.put(`${baseURL}/equipments/${itemId}`, updatedItem, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const updatedItems = items.map(item =>
+      setItems(items.map((item) =>
         item._id === itemId ? response.data : item
-      );
-      setItems(updatedItems);
+      ));
       toast.dismiss();
       toast.success("Item returned successfully!");
     } catch (error) {
-      console.error("Error returning equipment", error);
       toast.error("Error returning equipment. Please try again.");
     }
   };
 
   const formatDate = (date) => {
     const notReturnedDate = "1970-01-01T00:00:00.000Z";
-    if (date === notReturnedDate) {
-      return <span className="text-red-500">Not Yet Returned</span>;
-    }
-    return dayjs(date).format("hh:mm A DD-MM-YYYY");
+    return date === notReturnedDate ? <span className="text-red-500">Not Yet Returned</span> : dayjs(date).format("hh:mm A DD-MM-YYYY");
   };
 
-  // Filtered items logic
-  const filteredItems = items.filter(item => 
+  const filteredItems = items.filter(item =>
     (showReturned ? item.returnDate !== "1970-01-01T00:00:00.000Z" : item.returnDate === "1970-01-01T00:00:00.000Z") &&
-    (!filterDate || dayjs(item.returnDate).isSame(dayjs(filterDate), 'day'))
+    (!filterDate || dayjs(item.returnDate).isSame(dayjs(filterDate), "day"))
   );
 
   return (
@@ -179,22 +147,21 @@ const Equipment = () => {
       <ToastContainer />
       <h1 className="text-3xl font-bold mb-6">Equipment</h1>
 
-      {/* Filter Buttons and Date Input */}
       <div className="flex flex-col sm:flex-row justify-between mb-4">
-      <div className="flex space-x-2">
-                <button
-                  onClick={() => setShowReturned(false)}
-                  className={`py-2 px-4 border-2 rounded-2xl ${!showReturned ? "border-blue-500" : "bg-blue-500"} TopNav`}
-                >
-                  Currently Borrowed
-                </button>
-                <button
-                  onClick={() => setShowReturned(true)}
-                  className={`py-2 px-4 border-2 rounded-2xl ${showReturned ? "border-blue-500" : "bg-blue-500"} TopNav`}
-                >
-                  Returned Items
-                </button>
-              </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setShowReturned(false)}
+            className={`py-2 px-4 border-2 rounded-2xl ${!showReturned ? "border-blue-500" : "bg-blue-500"} TopNav`}
+          >
+            Currently Borrowed
+          </button>
+          <button
+            onClick={() => setShowReturned(true)}
+            className={`py-2 px-4 border-2 rounded-2xl ${showReturned ? "border-blue-500" : "bg-blue-500"} TopNav`}
+          >
+            Returned Items
+          </button>
+        </div>
         <input
           type="date"
           value={filterDate}
@@ -213,47 +180,35 @@ const Equipment = () => {
       </div>
 
       {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gray-100 p-4 rounded shadow-md mb-6 text-black"
-        >
+        <form onSubmit={handleSubmit} className="bg-gray-100 p-4 rounded shadow-md mb-6 text-black">
           <div className="mb-4">
-            <input
-              type="text"
-              name="name"
-              placeholder="Item Name"
-              value={newItem.name}
-              onChange={handleChange}
+            <select
+              value={selectedItem}
+              onChange={(e) => setSelectedItem(e.target.value)}
               required
-              className="border border-gray-300 p-2 w-full rounded"
-            />
+              className="border border-gray-300 p-2 w-full rounded text-black"
+            >
+              <option value="">Select Item</option>
+              {inventory.map((item) => (
+                <option key={item._id} value={item._id}>
+                  {item.name} (Available: {item.quantity})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="mb-4">
-            <input
-              type="file"
-              name="image"
-              onChange={handleImageChange}
-              required
-              className="border border-gray-300 p-2 w-full rounded"
-            />
+            <input type="file" name="image" onChange={handleImageChange} required className="border border-gray-300 p-2 w-full rounded" />
           </div>
 
           {imagePreview && (
             <div className="mb-4">
               <h4 className="text-lg font-bold">Image Preview:</h4>
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="mt-2 w-24 h-24 object-cover"
-              />
+              <img src={imagePreview} alt="Preview" className="mt-2 w-24 h-24 object-cover" />
             </div>
           )}
 
-          <button
-            type="submit"
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-          >
+          <button type="submit" className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
             Borrow Item
           </button>
         </form>
@@ -286,10 +241,7 @@ const Equipment = () => {
                   </td>
                   <td className="py-2 px-4">
                     {item.returnDate === "1970-01-01T00:00:00.000Z" && (
-                      <button
-                        onClick={() => handleReturn(item._id)}
-                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
-                      >
+                      <button onClick={() => handleReturn(item._id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded">
                         Return
                       </button>
                     )}
