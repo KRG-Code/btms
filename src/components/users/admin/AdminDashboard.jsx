@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css'; // Correct CSS import
 import 'chart.js/auto';
 import { Line } from 'react-chartjs-2';
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   // Complex chart data for incidents happening over time
   const chartData = {
     labels: [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ],
     datasets: [
@@ -127,132 +127,130 @@ const AdminDashboard = () => {
     setNotes((prevNotes) => prevNotes.filter((_, i) => i !== index));
   };
 
-return (
-  <div className="p-4 md:p-8">
-    <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+  return (
+    <div className="p-4 md:p-8">
+      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-    {/* Patrol and Incidents Overview */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div className="bg-blue-500 text-white p-4 rounded shadow-lg text-center">
-        <h2 className="text-lg font-semibold">Patrols Scheduled</h2>
-        <p className="text-2xl">{patrolData.patrolsScheduled}</p>
+      {/* Patrol and Incidents Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-blue-500 text-white p-4 rounded shadow-lg text-center">
+          <h2 className="text-lg font-semibold">Patrols Scheduled</h2>
+          <p className="text-2xl">{patrolData.patrolsScheduled}</p>
+        </div>
+        <div className="bg-green-500 text-white p-4 rounded shadow-lg text-center">
+          <h2 className="text-lg font-semibold">Incidents Responded</h2>
+          <p className="text-2xl">{patrolData.incidentsResponded}</p>
+        </div>
+        <div className="bg-yellow-500 text-white p-4 rounded shadow-lg text-center">
+          <h2 className="text-lg font-semibold">Total Patrols</h2>
+          <p className="text-2xl">{patrolData.totalPatrols}</p>
+        </div>
+        <div className="bg-red-500 text-white p-4 rounded shadow-lg text-center">
+          <h2 className="text-lg font-semibold">Active Patrols</h2>
+          <p className="text-2xl">{patrolData.activePatrols}</p>
+        </div>
       </div>
-      <div className="bg-green-500 text-white p-4 rounded shadow-lg text-center">
-        <h2 className="text-lg font-semibold">Incidents Responded</h2>
-        <p className="text-2xl">{patrolData.incidentsResponded}</p>
-      </div>
-      <div className="bg-yellow-500 text-white p-4 rounded shadow-lg text-center">
-        <h2 className="text-lg font-semibold">Total Patrols</h2>
-        <p className="text-2xl">{patrolData.totalPatrols}</p>
-      </div>
-      <div className="bg-red-500 text-white p-4 rounded shadow-lg text-center">
-        <h2 className="text-lg font-semibold">Active Patrols</h2>
-        <p className="text-2xl">{patrolData.activePatrols}</p>
-      </div>
-    </div>
 
-    {/* Tanods Overview */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div className="bg-indigo-500 text-white p-4 rounded shadow-lg text-center">
-        <h2 className="text-lg font-semibold">Online Tanods</h2>
-        <p className="text-2xl">{patrolData.onlineTanods}</p>
+      {/* Tanods Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-indigo-500 text-white p-4 rounded shadow-lg text-center">
+          <h2 className="text-lg font-semibold">Online Tanods</h2>
+          <p className="text-2xl">{patrolData.onlineTanods}</p>
+        </div>
+        <div className="bg-teal-500 text-white p-4 rounded shadow-lg text-center">
+          <h2 className="text-lg font-semibold">Tanods on Patrol</h2>
+          <p className="text-2xl">{patrolData.tanodsOnPatrol}</p>
+        </div>
+        <div className="bg-orange-500 text-white p-4 rounded shadow-lg text-center">
+          <h2 className="text-lg font-semibold">Total Tanods</h2>
+          <p className="text-2xl">{patrolData.totalTanods}</p>
+        </div>
+        <div className="bg-pink-500 text-white p-4 rounded shadow-lg text-center">
+          <h2 className="text-lg font-semibold">Available Tanods</h2>
+          <p className="text-2xl">{patrolData.availableTanods}</p>
+        </div>
       </div>
-      <div className="bg-teal-500 text-white p-4 rounded shadow-lg text-center">
-        <h2 className="text-lg font-semibold">Tanods on Patrol</h2>
-        <p className="text-2xl">{patrolData.tanodsOnPatrol}</p>
-      </div>
-      <div className="bg-orange-500 text-white p-4 rounded shadow-lg text-center">
-        <h2 className="text-lg font-semibold">Total Tanods</h2>
-        <p className="text-2xl">{patrolData.totalTanods}</p>
-      </div>
-      <div className="bg-pink-500 text-white p-4 rounded shadow-lg text-center">
-        <h2 className="text-lg font-semibold">Available Tanods</h2>
-        <p className="text-2xl">{patrolData.availableTanods}</p>
-      </div>
-    </div>
 
-    {/* Notes and Calendar Section */}
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-      <div className="bg-white p-4 rounded shadow-lg col-span-1 TopNav">
-        {/* Calendar */}
-        <div className="mt-4">
-          <h2 className="text-lg font-semibold mb-4">Calendar</h2>
-          <Calendar className="TopNav" onChange={handleDateChange} value={date} />
+      {/* Notes and Calendar Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white p-4 rounded shadow-lg col-span-1 TopNav">
+          {/* Calendar */}
+          <div className="mt-4">
+            <h2 className="text-lg font-semibold mb-4">Calendar</h2>
+            <Calendar className="TopNav" onChange={handleDateChange} value={date} />
+          </div>
+
+          {/* Notes */}
+          <div className="flex flex-col mt-2">
+            <h2 className="text-lg font-semibold mb-4">Notes</h2>
+            <div className="flex-1 overflow-y-auto max-h-64">
+              <ul>
+                {notes.map((note, index) => (
+                  <li key={index} className="border-b py-2 flex justify-between items-center">
+                    <span className="font-bold">{note.date}:</span> {note.note}
+                    <button onClick={() => deleteNote(index)} className="text-red-600 ml-2">
+                      <FaTrash />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex items-center mt-4">
+              <input
+                type="text"
+                value={currentNote}
+                onChange={(e) => setCurrentNote(e.target.value)}
+                placeholder="Add a note..."
+                className="border p-2 rounded mr-2 flex-grow text-black"
+              />
+              <button onClick={addNote} className="bg-blue-500 text-white p-2 rounded">
+                Add
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Notes */}
-        <div className="flex flex-col mt-2">
-          <h2 className="text-lg font-semibold mb-4">Notes</h2>
-          <div className="flex-1 overflow-y-auto max-h-64">
-            <ul>
-              {notes.map((note, index) => (
-                <li key={index} className="border-b py-2 flex justify-between items-center">
-                  <span className="font-bold">{note.date}:</span> {note.note}
-                  <button onClick={() => deleteNote(index)} className="text-red-600 ml-2">
-                    <FaTrash />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="flex items-center mt-4">
-            <input
-              type="text"
-              value={currentNote}
-              onChange={(e) => setCurrentNote(e.target.value)}
-              placeholder="Add a note..."
-              className="border p-2 rounded mr-2 flex-grow text-black"
+        {/* Chart Section */}
+        <div className="bg-white p-4 rounded shadow-lg col-span-3 TopNav">
+          <h2 className="text-lg font-semibold mb-4">Incident Chart</h2>
+          <Line data={chartData} />
+        </div>
+      </div>
+
+      {/* Map and Top Performers Section */}
+      <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
+        {/* Map Section */}
+        <div className="bg-white p-4 rounded shadow-lg w-full lg:w-3/4 TopNav">
+          <h2 className="text-lg font-semibold mb-4">Map</h2>
+          <MapContainer center={mapCenter} zoom={13} style={{ height: '400px', width: '100%' }}>
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
-            <button
-              onClick={addNote}
-              className="bg-blue-500 text-white p-2 rounded"
-            >
-              Add
-            </button>
-          </div>
+            {incidents.map((incident, index) => (
+              <Marker key={incident.id} position={incident.position}>
+                <Popup>{incident.details}</Popup>
+                <Tooltip>{`Marker ${index + 1}`}</Tooltip>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
+
+        {/* Top Performers Section */}
+        <div className="bg-white p-4 rounded shadow-lg w-full lg:w-1/4 TopNav">
+          <h2 className="text-lg font-semibold mb-4">Top Tanod Performers</h2>
+          <ul>
+            {topPerformers.map((performer, index) => (
+              <li key={index} className="flex justify-between py-1">
+                <span>{performer.name}</span>
+                <span>{'⭐'.repeat(Math.round(performer.rating))} ({performer.rating})</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
-
-      {/* Chart Section */}
-      <div className="bg-white p-4 rounded shadow-lg col-span-3 TopNav">
-        <h2 className="text-lg font-semibold mb-4">Incident Chart</h2>
-        <Line data={chartData} />
-      </div>
     </div>
-
-    {/* Map and Top Performers Section */}
-    <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
-      {/* Map Section */}
-      <div className="bg-white p-4 rounded shadow-lg w-full lg:w-3/4 TopNav">
-        <h2 className="text-lg font-semibold mb-4">Map</h2>
-        <MapContainer center={mapCenter} zoom={13} style={{ height: '400px', width: '100%' }}>
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          {incidents.map((incident) => (
-            <Marker key={incident.id} position={incident.position}>
-              <Popup>{incident.details}</Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </div>
-
-      {/* Top Performers Section */}
-      <div className="bg-white p-4 rounded shadow-lg w-full lg:w-1/4 TopNav">
-        <h2 className="text-lg font-semibold mb-4">Top Tanod Performers</h2>
-        <ul>
-          {topPerformers.map((performer, index) => (
-            <li key={index} className="flex justify-between py-1">
-              <span>{performer.name}</span>
-              <span>{'⭐'.repeat(Math.round(performer.rating))} ({performer.rating})</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  </div>
-);
+  );
 };
 
 export default AdminDashboard;

@@ -61,18 +61,17 @@ export default function TanodPersonels() {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-  
+
         const inventoryWithBorrowed = response.data.map((item) => ({
           ...item,
           currentlyBorrowed: item.total - item.quantity,
         }));
-  
+
         setInventoryItems(inventoryWithBorrowed);
       } catch (error) {
         toast.error("Failed to load inventory items.");
       }
     };
-  
 
     fetchTanods();
     fetchInventory();
@@ -234,99 +233,100 @@ export default function TanodPersonels() {
         onClick={() => setShowInventoryModal(!showInventoryModal)}
         className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
       >
-        {showInventoryModal ? "Close Inventory" : "Manage Inventory"}
+        {showInventoryModal ? "Manage Inventory" : "Manage Inventory"}
       </button>
 
       {/* Inventory Modal */}
       {showInventoryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative TopNav">
-            <button
-              onClick={() => {
-                setShowInventoryModal(false);
-                setEditMode(false);
-                setNewItem({ name: "", quantity: "" });
-              }}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-lg font-bold"
-            >
-              &#x2715;
-            </button>
-            <h2 className="text-xl font-bold mb-4">Inventory</h2>
-            <form onSubmit={handleAddOrUpdateItem} className="mb-6">
-              <div className="flex items-center mb-4">
-                <input
-                  type="text"
-                  placeholder="Item Name"
-                  value={newItem.name}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, name: e.target.value })
-                  }
-                  className="mr-4 p-2 border rounded w-full text-black"
-                />
-                <input
-                  type="number"
-                  placeholder="Quantity"
-                  value={newItem.quantity}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, quantity: e.target.value })
-                  }
-                  className="mr-4 p-2 border rounded w-full text-black"
-                />
-              </div>
-              <button
-                type="submit"
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                {editMode ? "Update Item" : "Add Item"}
-              </button>
-            </form>
-
-            <table className="min-w-full bg-white shadow-md rounded-lg border overflow-hidden text-center">
-  <thead className="TopNav">
-    <tr>
-      <th className="py-2 px-4 border">Item Name</th>
-      <th className="py-2 px-4 border">Available Item to Borrow</th>
-      <th className="py-2 px-4 border">Currently Borrowed Item</th>
-      <th className="py-2 px-4 border">Total Item</th>
-      <th className="py-2 px-4 border">Actions</th>
-    </tr>
-  </thead>
-  <tbody className="text-black">
-    {inventoryItems.length === 0 ? (
-      <tr>
-        <td colSpan="5" className="text-center py-4">
-          No items in inventory.
-        </td>
-      </tr>
-    ) : (
-      inventoryItems.map((item) => (
-        <tr key={item._id}>
-          <td className="py-2 px-4 border">{item.name}</td>
-          <td className="py-2 px-4 border">{item.quantity}</td>
-          <td className="py-2 px-4 border">{item.currentlyBorrowed}</td>
-          <td className="py-2 px-4 border">{item.total}</td>
-          <td className="py-2 px-4 border">
-            <button
-              onClick={() => handleEditItem(item)}
-              className="bg-yellow-500 text-white px-2 py-1 rounded mx-1 hover:bg-yellow-700"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => handleDeleteItem(item._id)}
-              className="bg-red-500 text-white px-2 py-1 rounded mx-1 hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </td>
-        </tr>
-      ))
-    )}
-  </tbody>
-</table>
-          </div>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl relative TopNav">
+      <button
+        onClick={() => {
+          setShowInventoryModal(false);
+          setEditMode(false);
+          setNewItem({ name: "", quantity: "" });
+        }}
+        className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-lg font-bold"
+      >
+        &#x2715;
+      </button>
+      <h2 className="text-xl font-bold mb-4">Inventory</h2>
+      <form onSubmit={handleAddOrUpdateItem} className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center mb-4">
+          <input
+            type="text"
+            placeholder="Item Name"
+            value={newItem.name}
+            onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+            className="mr-4 p-2 border rounded w-full mb-4 sm:mb-0 sm:w-1/2 text-black"
+          />
+          <input
+            type="number"
+            placeholder="Quantity"
+            value={newItem.quantity}
+            onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+            className="p-2 border rounded w-full sm:w-1/2 text-black"
+          />
         </div>
-      )}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            {editMode ? "Update Item" : "Add Item"}
+          </button>
+        </div>
+      </form>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white shadow-md rounded-lg border overflow-hidden text-center">
+          <thead className="bg-gray-100 TopNav">
+            <tr>
+              <th className="py-2 px-4 border text-sm sm:text-base">Item Name</th>
+              <th className="py-2 px-4 border text-sm sm:text-base">Available Item to Borrow</th>
+              <th className="py-2 px-4 border text-sm sm:text-base">Currently Borrowed Item</th>
+              <th className="py-2 px-4 border text-sm sm:text-base">Total Item</th>
+              <th className="py-2 px-4 border text-sm sm:text-base">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="text-black">
+            {inventoryItems.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="text-center py-4 text-sm sm:text-base">
+                  No items in inventory.
+                </td>
+              </tr>
+            ) : (
+              inventoryItems.map((item) => (
+                <tr key={item._id}>
+                  <td className="py-2 px-4 border text-sm sm:text-base">{item.name}</td>
+                  <td className="py-2 px-4 border text-sm sm:text-base">{item.quantity}</td>
+                  <td className="py-2 px-4 border text-sm sm:text-base">{item.currentlyBorrowed}</td>
+                  <td className="py-2 px-4 border text-sm sm:text-base">{item.total}</td>
+                  <td className="py-2 px-4 border text-sm sm:text-base">
+                    <button
+                      onClick={() => handleEditItem(item)}
+                      className="bg-yellow-500 text-white px-2 py-1 rounded mx-1 hover:bg-yellow-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteItem(item._id)}
+                      className="bg-red-500 mt-3 text-white px-2 py-1 rounded mx-1 hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Tanod Personnel Table */}
       <div className="overflow-x-auto">

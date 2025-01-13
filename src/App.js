@@ -16,6 +16,7 @@ const AdminDashboard = lazy(() => import("./components/users/admin/AdminDashboar
 const ManageTanod = lazy(() => import("./components/users/admin/Personels"));
 const Resources = lazy(() => import("./components/users/admin/Resources"));
 const ManageSchedule = lazy(() => import("./components/users/admin/ManageSchedule"));
+const PatrolManagement = lazy(() => import("./components/users/admin/ManagePatrol"));
 
 // Tanod routes
 const Dashboard = lazy(() => import("./components/users/tanods/Dashboard"));
@@ -108,6 +109,10 @@ function App() {
                 <Route
                   path="/ManageSchedule"
                   element={<ProtectedRoute userTypeAllowed={["admin"]}><ManageSchedule /></ProtectedRoute>}
+                />
+                <Route
+                  path="/ManagePatrol"
+                  element={<ProtectedRoute userTypeAllowed={["admin"]}><PatrolManagement /></ProtectedRoute>}
                 />
               </Route>
               
