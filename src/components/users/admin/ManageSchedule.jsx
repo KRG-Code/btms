@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function ScheduleMaker() {
@@ -13,9 +13,15 @@ export default function ScheduleMaker() {
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentScheduleId, setCurrentScheduleId] = useState(null);
+  const [originalStartTime, setOriginalStartTime] = useState("");
+  const [showAddTanodModal, setShowAddTanodModal] = useState(false);
+  const [showRemoveTanodModal, setShowRemoveTanodModal] = useState(false);
   const [scheduleMembers, setScheduleMembers] = useState([]);
   const [showMembersTable, setShowMembersTable] = useState(false);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
+  const [checkedTanods, setCheckedTanods] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterDate, setFilterDate] = useState("");
 
   useEffect(() => {
     const fetchTanods = async () => {
@@ -44,6 +50,13 @@ export default function ScheduleMaker() {
 
   const handleCreateOrUpdateSchedule = async (e) => {
     e.preventDefault();
+
+    // Validate that at least one Tanod is selected
+    if (selectedTanods.length === 0) {
+      toast.error("Please select at least one Tanod.");
+      return; // Prevent form submission if no Tanod is selected
+    }
+
     const token = localStorage.getItem("token");
     const url = isEditing
       ? `${process.env.REACT_APP_API_URL}/auth/schedule/${currentScheduleId}`
@@ -65,41 +78,43 @@ export default function ScheduleMaker() {
               : schedule
           )
         );
+        fetchSchedules();
         toast.success("Schedule updated successfully!");
       } else {
+        fetchSchedules();
         setSchedules([...schedules, response.data.schedule]);
         toast.success("Schedule created successfully!");
       }
 
-      resetForm(); // Reset the form after submission
+      resetForm();
     } catch (error) {
       console.error("Error creating/updating schedule:", error);
       toast.error("Error creating/updating schedule.");
     }
   };
 
+  const fetchSchedules = async () => {
+    setLoadingSchedules(true);
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/auth/schedules`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setSchedules(response.data);
+    } catch (error) {
+      console.error("Error fetching schedules:", error);
+      toast.error("Error fetching schedules.");
+    } finally {
+      setLoadingSchedules(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSchedules = async () => {
-      setLoadingSchedules(true);
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/auth/schedules`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setSchedules(response.data);
-      } catch (error) {
-        console.error("Error fetching schedules:", error);
-        toast.error("Error fetching schedules.");
-      } finally {
-        setLoadingSchedules(false);
-      }
-    };
-
     fetchSchedules();
   }, []);
 
@@ -115,6 +130,7 @@ export default function ScheduleMaker() {
     setEndTime("");
     setIsEditing(false);
     setCurrentScheduleId(null);
+    setOriginalStartTime("");
     setShowForm(false);
   };
 
@@ -167,6 +183,7 @@ export default function ScheduleMaker() {
         }
       );
       setSchedules(schedules.filter((schedule) => schedule._id !== scheduleId));
+      fetchSchedules();
       toast.dismiss();
       toast.success("Schedule deleted successfully!");
     } catch (error) {
@@ -175,13 +192,53 @@ export default function ScheduleMaker() {
     }
   };
 
+  const handleAddSelectedTanods = () => {
+    setSelectedTanods((prev) => [...prev, ...checkedTanods]);
+    setCheckedTanods([]);
+    setShowAddTanodModal(false);
+  };
+
+  const handleRemoveSelectedTanods = () => {
+    setSelectedTanods((prev) =>
+      prev.filter((id) => !checkedTanods.includes(id))
+    );
+    setCheckedTanods([]);
+    setShowRemoveTanodModal(false);
+  };
+
+  const handleToggleCheckbox = (tanodId) => {
+    setCheckedTanods((prev) =>
+      prev.includes(tanodId)
+        ? prev.filter((id) => id !== tanodId)
+        : [...prev, tanodId]
+    );
+  };
+
+  const filteredSchedules = schedules.filter((schedule) => {
+    const matchesSearchTerm = schedule.unit
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesFilterDate = filterDate
+      ? new Date(schedule.startTime).toLocaleDateString() ===
+        new Date(filterDate).toLocaleDateString()
+      : true;
+    return matchesSearchTerm && matchesFilterDate;
+  });
+
+  const getMinDateTime = () => {
+    const now = new Date();
+    return now.toISOString().slice(0, 16);
+  };
+
   return (
     <div className="container mx-auto relative">
-      <ToastContainer />
-      <h1 className="text-2xl font-bold mb-4">Tanod Schedule Maker</h1>
+      <h1 className="text-2xl font-bold mb-4">Schedule Maker</h1>
 
       <button
-        onClick={() => setShowForm(true)}
+        onClick={() => {
+          resetForm();
+          setShowForm(true);
+        }}
         className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
         hidden={showForm}
       >
@@ -218,23 +275,41 @@ export default function ScheduleMaker() {
             </div>
 
             <div className="mb-4">
-              <label className="block mb-1">Select Tanods:</label>
-              <select
-                multiple
-                value={selectedTanods}
-                onChange={(e) =>
-                  setSelectedTanods(
-                    [...e.target.selectedOptions].map((option) => option.value)
-                  )
-                }
-                className="border p-2 rounded w-full text-black"
-              >
-                {tanods.map((tanod) => (
-                  <option key={tanod._id} value={tanod._id}>
-                    {`${tanod.firstName} ${tanod.lastName}`}
-                  </option>
-                ))}
-              </select>
+              <label className="block mb-1">Tanods:</label>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddTanodModal(true)}
+                  className="bg-green-500 text-white px-4 py-2 rounded mb-2"
+                >
+                  Add Tanods
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRemoveTanodModal(true)}
+                  className="bg-red-500 text-white px-4 py-2 rounded mb-2 ml-2"
+                >
+                  Remove Tanods
+                </button>
+              </div>
+              <ul>
+                {selectedTanods.map((tanodId) => {
+                  const tanod = tanods.find((t) => t._id === tanodId);
+                  return (
+                    <li key={tanodId} className="flex items-center mb-2">
+                      <img
+                        src={
+                          tanod?.profilePicture ||
+                          "https://via.placeholder.com/50"
+                        }
+                        alt={tanod?.firstName}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                      {tanod?.firstName} {tanod?.lastName}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
 
             <div className="mb-4">
@@ -248,6 +323,7 @@ export default function ScheduleMaker() {
                 }
                 onChange={(e) => setStartTime(e.target.value)}
                 className="border p-2 rounded w-full text-black"
+                min={isEditing ? originalStartTime : getMinDateTime()}
                 required
               />
             </div>
@@ -263,6 +339,7 @@ export default function ScheduleMaker() {
                 }
                 onChange={(e) => setEndTime(e.target.value)}
                 className="border p-2 rounded w-full text-black"
+                min={startTime || getMinDateTime()}
                 required
               />
             </div>
@@ -286,48 +363,70 @@ export default function ScheduleMaker() {
         </div>
       )}
 
-      <h2 className="text-xl font-bold mb-4">Scheduled Patrols</h2>
-      <table className="min-w-full bg-white shadow-md rounded-lg border overflow-hidden text-center">
-        <thead className="TopNav">
-          <tr>
-            <th className="border">Unit</th>
-            <th className="border">Start Time</th>
-            <th className="border">End Time</th>
-            <th className="border">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="text-black">
-          {loadingSchedules ? (
-            <tr>
-              <td colSpan="4" className="text-center py-4">
-                Loading Schedules...
-              </td>
-            </tr>
-          ) : schedules.length === 0 ? (
-            <tr>
-              <td colSpan="4" className="text-center py-4">
-                No schedules found.
-              </td>
-            </tr>
-          ) : (
-            schedules.map((schedule) => (
-              <tr key={schedule._id}>
-                <td className="border">{schedule.unit}</td>
-                <td className="border">
-                  {new Date(schedule.startTime).toLocaleString()}
-                </td>
-                <td className="border">
-                  {new Date(schedule.endTime).toLocaleString()}
-                </td>
-                <td className="border">
+      <div className="mb-4 flex justify-end gap-x-3">
+      <h2 className="text-2xl font-bold mb-4 mt-3 w-8/12">Scheduled list</h2>
+        <input
+          type="text"
+          placeholder="Search by unit"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border p-2 rounded w-3/12 text-black"
+        />
+        <input
+          type="date"
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+          className="border p-2 rounded w-2/12 text-black"
+        />
+      </div>
+      <div className="h-full border-separate overflow-clip rounded-xl border border-solid flex flex-col">
+        <div className="overflow-y-auto" style={{ maxHeight: "300px" }}>
+          <table className="w-full table-fixed border-collapse">
+            <thead className="sticky top-0 z-10 TopNav">
+              <tr>
+                <th className="border px-4 py-2">Unit</th>
+                <th className="border px-4 py-2">Start Time</th>
+                <th className="border px-4 py-2">End Time</th>
+                <th className="border px-4 py-2">Patrol Area</th>
+                <th className="border px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="text-black bg-white text-center align-middle">
+              {loadingSchedules ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-4">
+                    Loading Schedules...
+                  </td>
+                </tr>
+              ) : filteredSchedules.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-4">
+                    No schedules found.
+                  </td>
+                </tr>
+              ) : (
+                filteredSchedules.map((schedule) => (
+                  <tr key={schedule._id}>
+                    <td className="border px-4 py-2">{schedule.unit}</td>
+                    <td className="border px-4 py-2">
+                      {new Date(schedule.startTime).toLocaleString()}
+                    </td>
+                    <td className="border px-4 py-2">
+                      {new Date(schedule.endTime).toLocaleString()}
+                    </td>
+                    <td className="border px-4 py-2">
+                      {schedule.patrolArea ? schedule.patrolArea.legend : "N/A"}
+                    </td>
+                    <td className="border px-4 py-2">
+                    <div className="flex justify-center space-x-2">
                   <button
-                    className="bg-green-500 text-white w-32 h-10 rounded mx-1"
+                    className="bg-green-500 text-white w-32 h-10 rounded whitespace-nowrap text-sm"
                     onClick={() => handleViewMembers(schedule)}
                   >
                     View Members
                   </button>
                   <button
-                    className="bg-yellow-500 text-white w-32 h-10 rounded mx-1"
+                    className="bg-yellow-500 text-white w-32 h-10 rounded whitespace-nowrap text-sm"
                     onClick={() => {
                       setUnit(schedule.unit);
                       setSelectedTanods(
@@ -335,6 +434,11 @@ export default function ScheduleMaker() {
                       );
                       setStartTime(schedule.startTime);
                       setEndTime(schedule.endTime);
+                      setOriginalStartTime(
+                        new Date(schedule.startTime)
+                          .toLocaleString("sv")
+                          .slice(0, 16)
+                      );
                       setCurrentScheduleId(schedule._id);
                       setIsEditing(true);
                       setShowForm(true);
@@ -343,17 +447,20 @@ export default function ScheduleMaker() {
                     Edit
                   </button>
                   <button
-                    className="bg-red-500 text-white w-32 h-10 rounded mx-1"
+                    className="bg-red-500 text-white w-32 h-10 rounded whitespace-nowrap text-sm"
                     onClick={() => handleDeleteSchedule(schedule._id)}
                   >
                     Delete
                   </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+                </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {showMembersTable && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center">
@@ -396,6 +503,93 @@ export default function ScheduleMaker() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Tanod Modal */}
+      {showAddTanodModal && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative TopNav">
+            <h2 className="text-xl font-bold mb-4">Add Tanods</h2>
+            <button
+              onClick={() => setShowAddTanodModal(false)}
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+            >
+              &#x2715;
+            </button>
+            <div className="overflow-y-auto h-64">
+              {tanods
+                .filter((tanod) => !selectedTanods.includes(tanod._id))
+                .map((tanod) => (
+                  <div key={tanod._id} className="mb-2 flex items-center">
+                    <input
+                      type="checkbox"
+                      value={tanod._id}
+                      onChange={() => handleToggleCheckbox(tanod._id)}
+                      className="mr-2"
+                    />
+                    <img
+                      src={
+                        tanod.profilePicture || "https://via.placeholder.com/50"
+                      }
+                      alt={tanod.firstName}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                    {tanod.firstName} {tanod.lastName}
+                  </div>
+                ))}
+            </div>
+            <button
+              onClick={handleAddSelectedTanods}
+              className="bg-green-500 text-white px-4 py-2 rounded mt-4"
+            >
+              Add Selected
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Tanod Modal */}
+      {showRemoveTanodModal && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative TopNav">
+            <h2 className="text-xl font-bold mb-4">Remove Tanods</h2>
+            <button
+              onClick={() => setShowRemoveTanodModal(false)}
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+            >
+              &#x2715;
+            </button>
+            <div className="overflow-y-auto h-64">
+              {selectedTanods.map((tanodId) => {
+                const tanod = tanods.find((t) => t._id === tanodId);
+                return (
+                  <div key={tanodId} className="mb-2 flex items-center">
+                    <input
+                      type="checkbox"
+                      onChange={() => handleToggleCheckbox(tanodId)}
+                      className="mr-2"
+                    />
+                    <img
+                      src={
+                        tanod?.profilePicture ||
+                        "https://via.placeholder.com/50"
+                      }
+                      alt={tanod?.firstName}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                    {tanod?.firstName} {tanod?.lastName}
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              onClick={handleRemoveSelectedTanods}
+              className="bg-green-500 text-white px-4 py-2 rounded mt-4"
+            >
+              Remove Selected
+            </button>
           </div>
         </div>
       )}
