@@ -105,7 +105,37 @@ export default function ScheduleMaker() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setSchedules(response.data);
+      const schedulesWithPatrolArea = await Promise.all(
+        response.data.map(async (schedule) => {
+          if (schedule.patrolArea && typeof schedule.patrolArea === 'object' && schedule.patrolArea._id) {
+            const patrolAreaResponse = await axios.get(
+              `${process.env.REACT_APP_API_URL}/polygons/${schedule.patrolArea._id}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            schedule.patrolArea = patrolAreaResponse.data;
+          } else if (schedule.patrolArea) {
+            const patrolAreaResponse = await axios.get(
+              `${process.env.REACT_APP_API_URL}/polygons/${schedule.patrolArea}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            schedule.patrolArea = patrolAreaResponse.data;
+          }
+          const currentTime = new Date();
+          if (new Date(schedule.startTime) <= currentTime && new Date(schedule.endTime) >= currentTime) {
+            schedule.status = 'Ongoing';
+          } else if (new Date(schedule.endTime) < currentTime) {
+            schedule.status = 'Completed';
+          } else {
+            schedule.status = 'Upcoming';
+          }
+          return schedule;
+        })
+      );
+      setSchedules(schedulesWithPatrolArea);
     } catch (error) {
       console.error("Error fetching schedules:", error);
       toast.error("Error fetching schedules.");
@@ -144,7 +174,15 @@ export default function ScheduleMaker() {
         }
       );
 
-      setScheduleMembers(response.data.tanods);
+      setScheduleMembers(response.data.tanods.map(tanod => {
+        const memberStatus = schedule.patrolStatus.find(status => status.tanodId === tanod._id);
+        return {
+          ...tanod,
+          status: memberStatus ? memberStatus.status : 'Not Started',
+          startTime: memberStatus ? memberStatus.startTime : null,
+          endTime: memberStatus ? memberStatus.endTime : null,
+        };
+      }));
       setShowMembersTable(true);
     } catch (error) {
       console.error("Error fetching members:", error);
@@ -228,6 +266,10 @@ export default function ScheduleMaker() {
   const getMinDateTime = () => {
     const now = new Date();
     return now.toISOString().slice(0, 16);
+  };
+
+  const handleRefresh = () => {
+    fetchSchedules();
   };
 
   return (
@@ -378,6 +420,12 @@ export default function ScheduleMaker() {
           onChange={(e) => setFilterDate(e.target.value)}
           className="border p-2 rounded w-2/12 text-black"
         />
+        <button
+          onClick={handleRefresh}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Refresh
+        </button>
       </div>
       <div className="h-full border-separate overflow-clip rounded-xl border border-solid flex flex-col">
         <div className="overflow-y-auto" style={{ maxHeight: "300px" }}>
@@ -388,19 +436,20 @@ export default function ScheduleMaker() {
                 <th className="border px-4 py-2">Start Time</th>
                 <th className="border px-4 py-2">End Time</th>
                 <th className="border px-4 py-2">Patrol Area</th>
+                <th className="border px-4 py-2">Status</th>
                 <th className="border px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody className="text-black bg-white text-center align-middle">
               {loadingSchedules ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-4">
+                  <td colSpan="6" className="text-center py-4">
                     Loading Schedules...
                   </td>
                 </tr>
               ) : filteredSchedules.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-4">
+                  <td colSpan="6" className="text-center py-4">
                     No schedules found.
                   </td>
                 </tr>
@@ -416,6 +465,9 @@ export default function ScheduleMaker() {
                     </td>
                     <td className="border px-4 py-2">
                       {schedule.patrolArea ? schedule.patrolArea.legend : "N/A"}
+                    </td>
+                    <td className="border px-4 py-2">
+                      {schedule.status}
                     </td>
                     <td className="border px-4 py-2">
                     <div className="flex justify-center space-x-2">
@@ -479,6 +531,9 @@ export default function ScheduleMaker() {
                     <th>Profile Picture</th>
                     <th>Full Name</th>
                     <th>Contact Number</th>
+                    <th>Status</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
                   </tr>
                 </thead>
                 <tbody className="text-black">
@@ -497,6 +552,15 @@ export default function ScheduleMaker() {
                       <td className="border">{`${member.firstName} ${member.lastName}`}</td>
                       <td className="border">
                         {member.contactNumber || "N/A"}
+                      </td>
+                      <td className="border">
+                        {member.status}
+                      </td>
+                      <td className="border">
+                        {member.startTime ? new Date(member.startTime).toLocaleString() : "N/A"}
+                      </td>
+                      <td className="border">
+                        {member.endTime ? new Date(member.endTime).toLocaleString() : "N/A"}
                       </td>
                     </tr>
                   ))}

@@ -44,7 +44,29 @@ export default function TanodSchedule() {
           `${process.env.REACT_APP_API_URL}/auth/tanod-schedules/${userId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setSchedules(response.data.length ? response.data : []);
+        const schedulesWithPatrolArea = await Promise.all(
+          response.data.map(async (schedule) => {
+            if (schedule.patrolArea && typeof schedule.patrolArea === 'object' && schedule.patrolArea._id) {
+              const patrolAreaResponse = await axios.get(
+                `${process.env.REACT_APP_API_URL}/polygons/${schedule.patrolArea._id}`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              schedule.patrolArea = patrolAreaResponse.data;
+            } else if (schedule.patrolArea) {
+              const patrolAreaResponse = await axios.get(
+                `${process.env.REACT_APP_API_URL}/polygons/${schedule.patrolArea}`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              schedule.patrolArea = patrolAreaResponse.data;
+            }
+            return schedule;
+          })
+        );
+        setSchedules(schedulesWithPatrolArea);
       } catch (error) {
         console.error("Error fetching schedules:", error);
         toast.error("Error fetching schedules.");
@@ -87,20 +109,21 @@ export default function TanodSchedule() {
             <th className="border">Unit</th>
             <th className="border">Start Time</th>
             <th className="border">End Time</th>
+            <th className="border">Patrol Area</th>
             <th className="border">Actions</th>
           </tr>
         </thead>
         <tbody className="text-black">
           {loadingSchedules ? (
             <tr>
-              <td colSpan="4" className="text-center">
+              <td colSpan="5" className="text-center">
                 <Loading type="circle" />
                 Loading Schedules...
               </td>
             </tr>
           ) : schedules.length === 0 ? (
             <tr>
-              <td colSpan="4" className="text-center">
+              <td colSpan="5" className="text-center">
                 No schedule set yet.
               </td>
             </tr>
@@ -110,6 +133,7 @@ export default function TanodSchedule() {
                 <td className="border">{schedule.unit}</td>
                 <td className="border">{new Date(schedule.startTime).toLocaleString()}</td>
                 <td className="border">{new Date(schedule.endTime).toLocaleString()}</td>
+                <td className="border">{schedule.patrolArea ? schedule.patrolArea.legend : "N/A"}</td>
                 <td className="border">
                   <button
                     className="bg-green-500 text-white px-2 py-1 rounded mx-1 my-3"
