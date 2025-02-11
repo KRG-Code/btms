@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { FaUserShield } from "react-icons/fa"; // Importing an officer icon
 
-const Incidents = () => {
+const Incidents = ({ fetchCurrentPatrolArea }) => {
   const [patrols, setPatrols] = useState([]);
   const [upcomingPatrols, setUpcomingPatrols] = useState([]);
   const [incident, setIncident] = useState({ type: "", description: "", location: "" });
   const [incidentLog, setIncidentLog] = useState([]);
   const [currentReport, setCurrentReport] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showUpcomingSchedule, setShowUpcomingSchedule] = useState(false);
+  const [showTodaySchedule, setShowTodaySchedule] = useState(false); // New state for today's schedule modal
   const [showReportIncident, setShowReportIncident] = useState(false);
   const [showReportedIncidents, setShowReportedIncidents] = useState(false);
   const [todayPatrols, setTodayPatrols] = useState([]);
@@ -25,6 +26,7 @@ const Incidents = () => {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      localStorage.setItem("userId", response.data._id); // Store userId in localStorage
       return response.data._id;
     } catch (error) {
       console.error("Error fetching user profile:", error);
@@ -111,6 +113,8 @@ const Incidents = () => {
       };
       setPatrols([...patrols, newPatrol]);
       toast.success("Patrol has started.");
+      fetchUpcomingPatrols(); // Refresh the patrols list
+      fetchCurrentPatrolArea(); // Update the map with the current patrol area
     } catch (error) {
       console.error("Error starting patrol:", error);
       toast.error("Failed to start patrol.");
@@ -181,6 +185,7 @@ const Incidents = () => {
       toast.dismiss();
       toast.success("Patrol has ended.");
       fetchUpcomingPatrols(); // Refresh the patrols list
+      fetchCurrentPatrolArea(); // Update the map to remove the current patrol area
     } catch (error) {
       console.error("Error ending patrol:", error);
       toast.error("Failed to end patrol.");
@@ -233,40 +238,35 @@ const Incidents = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
+  const getPatrolButton = (patrol) => {
+    const userId = localStorage.getItem("userId");
+    const patrolStatus = patrol.patrolStatus.find(status => status.tanodId === userId);
+
+    if (!patrolStatus || patrolStatus.status === 'Not Started') {
+      return (
+        <button onClick={() => startPatrol(patrol._id, patrol.startTime)} className="bg-green-600 text-white text-sm md:text-base px-2 py-1 md:px-3 md:py-1 rounded shadow hover:bg-green-700 transition">
+          Start Patrol
+        </button>
+      );
+    } else if (patrolStatus.status === 'Started') {
+      return (
+        <button onClick={() => endPatrol(patrol._id)} className="bg-red-600 text-white text-sm md:text-base px-2 py-1 md:px-3 md:py-1 rounded shadow hover:bg-red-700 transition">
+          End Patrol
+        </button>
+      );
+    } else {
+      return null;
+    }
+  };
+
   return (
     <div className="p-4 max-w-4xl mx-auto bg-white bg-opacity-75 shadow-lg rounded-lg TopNav">
       <h1 onClick={toggleDropdown} className="text-2xl md:text-3xl font-bold text-center mb-4 cursor-pointer bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition">
-        Incidents and Patrol Management
+        <FaUserShield className="inline-block mr-2" /> {/* Officer icon */}
       </h1>
       
       {isDropdownOpen && (
         <div className="dropdown-content">
-          <h2 className="text-xl md:text-2xl mb-2">Today's Patrol Schedule</h2>
-          <ul className="list-disc list-inside mb-4">
-            {todayPatrols.length > 0 ? (
-              todayPatrols.map((patrol) => (
-                <li key={patrol._id} className="flex flex-wrap md:flex-nowrap items-center justify-between border-b py-2">
-                  <div className="flex-grow text-sm md:text-base">
-                    {`Unit ${patrol.unit.split(' ')[1]}: Start: ${formatTime(patrol.startTime)}, End: ${formatTime(patrol.endTime)}, Area: ${patrol.patrolArea ? patrol.patrolArea.legend : "N/A"}`}
-                  </div>
-                  <div className="flex space-x-2 mt-2 md:mt-0">
-                    {!patrols.find(p => p.id === patrol._id) ? (
-                      <button onClick={() => startPatrol(patrol._id, patrol.startTime)} className="bg-green-600 text-white text-sm md:text-base px-2 py-1 md:px-3 md:py-1 rounded shadow hover:bg-green-700 transition">
-                        Start Patrol
-                      </button>
-                    ) : (
-                      <button onClick={() => endPatrol(patrol._id)} className="bg-red-600 text-white text-sm md:text-base px-2 py-1 md:px-3 md:py-1 rounded shadow hover:bg-red-700 transition">
-                        End Patrol
-                      </button>
-                    )}
-                  </div>
-                </li>
-              ))
-            ) : (
-              <li className="text-center py-4 text-sm md:text-base">No schedule for today's patrol.</li>
-            )}
-          </ul>
-
           <h2 className="text-xl md:text-2xl mb-2">Log Patrol Report</h2>
           <textarea
             className="border p-2 mb-4 w-full h-24 rounded text-sm md:text-base text-black"
@@ -276,8 +276,8 @@ const Incidents = () => {
           />
 
           <div className="mb-4 flex justify-center">
-            <button onClick={() => setShowUpcomingSchedule(true)} className="bg-blue-600 text-white text-sm md:text-base px-4 py-2 md:px-6 md:py-2 rounded-lg shadow hover:bg-blue-700 transition">
-              Upcoming Patrol Schedule
+            <button onClick={() => setShowTodaySchedule(true)} className="bg-blue-600 text-white text-sm md:text-base px-4 py-2 md:px-6 md:py-2 rounded-lg shadow hover:bg-blue-700 transition">
+              Today's Patrol Schedule
             </button>
           </div>
 
@@ -295,13 +295,13 @@ const Incidents = () => {
         </div>
       )}
 
-      {showUpcomingSchedule && (
+      {showTodaySchedule && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-11/12 max-w-lg relative TopNav">
             <h2 className="text-xl md:text-2xl font-bold mb-4 flex justify-between items-center">
-              Upcoming Patrol Schedule
+              Today's Patrol Schedule
               <button
-                onClick={() => setShowUpcomingSchedule(false)}
+                onClick={() => setShowTodaySchedule(false)}
                 className="bg-red-500 text-white px-3 py-1 rounded"
               >
                 Close
@@ -315,21 +315,25 @@ const Incidents = () => {
                     <th className="border px-4 py-2 text-sm md:text-base">Start Time</th>
                     <th className="border px-4 py-2 text-sm md:text-base">End Time</th>
                     <th className="border px-4 py-2 text-sm md:text-base">Patrol Area</th>
+                    <th className="border px-4 py-2 text-sm md:text-base">Action</th> {/* Add Action column */}
                   </tr>
                 </thead>
                 <tbody className="text-black">
-                  {upcomingPatrols.length > 0 ? (
-                    upcomingPatrols.map((patrol, index) => (
+                  {todayPatrols.length > 0 ? (
+                    todayPatrols.map((patrol, index) => (
                       <tr key={index}>
                         <td className="border px-4 py-2 text-sm md:text-base">{patrol.unit}</td>
                         <td className="border px-4 py-2 text-sm md:text-base">{formatTime(patrol.startTime)}</td>
                         <td className="border px-4 py-2 text-sm md:text-base">{formatTime(patrol.endTime)}</td>
                         <td className="border px-4 py-2 text-sm md:text-base">{patrol.patrolArea ? patrol.patrolArea.legend : "N/A"}</td>
+                        <td className="border px-4 py-2 text-sm md:text-base">
+                          {getPatrolButton(patrol)}
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="text-center py-4 text-sm md:text-base">No upcoming patrols scheduled.</td>
+                      <td colSpan="5" className="text-center py-4 text-sm md:text-base">No schedule for today's patrol.</td>
                     </tr>
                   )}
                 </tbody>

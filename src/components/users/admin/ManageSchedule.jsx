@@ -273,7 +273,7 @@ export default function ScheduleMaker() {
   };
 
   return (
-    <div className="container mx-auto relative">
+    <div className="container mx-auto relative p-4">
       <h1 className="text-2xl font-bold mb-4">Schedule Maker</h1>
 
       <button
@@ -288,7 +288,7 @@ export default function ScheduleMaker() {
       </button>
 
       {showForm && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4">
           <form
             onSubmit={handleCreateOrUpdateSchedule}
             className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative TopNav"
@@ -405,20 +405,20 @@ export default function ScheduleMaker() {
         </div>
       )}
 
-      <div className="mb-4 flex justify-end gap-x-3">
-      <h2 className="text-2xl font-bold mb-4 mt-3 w-8/12">Scheduled list</h2>
+      <div className="mb-4 flex flex-col md:flex-row justify-end gap-3">
+        <h2 className="text-2xl font-bold mb-4 mt-3 w-full md:w-8/12">Scheduled list</h2>
         <input
           type="text"
           placeholder="Search by unit"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="border p-2 rounded w-3/12 text-black"
+          className="border p-2 rounded w-full md:w-3/12 text-black"
         />
         <input
           type="date"
           value={filterDate}
           onChange={(e) => setFilterDate(e.target.value)}
-          className="border p-2 rounded w-2/12 text-black"
+          className="border p-2 rounded w-full md:w-2/12 text-black"
         />
         <button
           onClick={handleRefresh}

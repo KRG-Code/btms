@@ -331,7 +331,7 @@ const PatrolManagement = () => {
     <div className="flex flex-col p-6 ">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
-      <div className="w-full h-[600px] p-6 flex items-center justify-center rounded-lg TopNav">
+      <div className="w-full h-[500px] p-6 flex items-center justify-center rounded-lg TopNav">
         <ScheduleMaker className="TopNav" />
       </div>
 
