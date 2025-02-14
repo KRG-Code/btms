@@ -10,8 +10,29 @@ import Incidents from './Incidents';
 const TanodMap = () => {
   const [patrolAreas, setPatrolAreas] = useState([]);
   const [currentPatrolArea, setCurrentPatrolArea] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [patrolLogs, setPatrolLogs] = useState([]);
   const mapRef = useRef(null);
+  const userMarkerRef = useRef(null);
   const start = [14.72661640119096, 121.03715880494757]; // Start point
+
+  const fetchUserProfile = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Please log in.');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUserProfile(response.data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast.error('Failed to load user profile.');
+    }
+  };
 
   const fetchPatrolAreas = async () => {
     const token = localStorage.getItem('token');
@@ -74,10 +95,41 @@ const TanodMap = () => {
     }
   };
 
+  const savePatrolLogs = async () => {
+    const token = localStorage.getItem('token');
+    const scheduleId = currentPatrolArea._id; // Assuming currentPatrolArea has the schedule ID
+    if (!token || !scheduleId) return;
+
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/schedule/save-patrol-logs`, {
+        scheduleId,
+        logs: patrolLogs,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setPatrolLogs([]); // Clear the logs after saving
+      toast.success('Patrol logs saved successfully');
+    } catch (error) {
+      console.error('Error saving patrol logs:', error);
+      toast.error('Failed to save patrol logs');
+    }
+  };
+
   useEffect(() => {
+    fetchUserProfile();
     fetchPatrolAreas();
     fetchCurrentPatrolArea();
   }, []);
+
+  useEffect(() => {
+    // Save patrol logs when the component unmounts or patrol area changes
+    return () => {
+      if (patrolLogs.length > 0) {
+        savePatrolLogs();
+      }
+    };
+  }, [currentPatrolArea]);
 
   const MapEvents = () => {
     const map = useMap();
@@ -112,8 +164,37 @@ const TanodMap = () => {
           layer.bindTooltip(currentPatrolArea.legend, { permanent: true, direction: 'center' });
           layer.addTo(map);
         }
+
+        const updateUserLocation = (position) => {
+          const { latitude, longitude } = position.coords;
+          // Clear existing user marker
+          if (userMarkerRef.current) {
+            map.removeLayer(userMarkerRef.current);
+          }
+          // Add a marker for the user's current location
+          if (userProfile && userProfile.profilePicture) {
+            const icon = L.divIcon({
+              html: `<div style="background-image: url(${userProfile.profilePicture}); background-size: cover; border: 2px solid white; border-radius: 50%; width: 50px; height: 50px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);"></div>`,
+              className: 'custom-marker'
+            });
+            userMarkerRef.current = L.marker([latitude, longitude], { icon }).addTo(map)
+              .openPopup();
+          }
+          map.setView([latitude, longitude], 13);
+        };
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(updateUserLocation);
+          const watchId = navigator.geolocation.watchPosition(updateUserLocation, (error) => {
+            console.error("Error getting user's location:", error);
+          });
+
+          return () => {
+            navigator.geolocation.clearWatch(watchId);
+          };
+        }
       }
-    }, [map, patrolAreas, currentPatrolArea]);
+    }, [map, patrolAreas, currentPatrolArea, userProfile]);
 
     return null;
   };
